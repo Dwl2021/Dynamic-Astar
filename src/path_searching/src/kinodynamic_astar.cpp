@@ -238,8 +238,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           double dt = tau * double(k) / double(check_num_);
           stateTransit(cur_state, xt, um, dt);
           pos = xt.head(3);
-          Eigen::Vector3i coord = posToIndex(pos);
-          if (map_util_->isOccupied(coord) == true)
+          if (map_util_->isOccupied(pos) == true)
           {
             is_occ = true;
             break;
@@ -475,8 +474,7 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
     // if (edt_environment_->evaluateCoarseEDT(coord, -1.0) <= margin_) {
     //   return false;
     // }
-    Eigen::Vector3i coord_int = coord.cast<int>();
-    if (map_util_->isOccupied(coord_int) == true)
+    if (map_util_->isOccupied(coord) == true)
     {
       return false;
     }

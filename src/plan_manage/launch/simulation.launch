@@ -1,6 +1,6 @@
 <launch>
   <!-- Launch the plan_manage_node from the plan_manage package -->
-  <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="log">
+  <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
   </node>
 
   <!-- Launch the visual_pcl node from the map_pcl package -->

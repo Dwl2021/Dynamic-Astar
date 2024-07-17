@@ -89,14 +89,6 @@ class MapUtil
     }
     has_map = true;
     // std::cout << "\033[1;32mFinish gridmap built\033[0m" << std::endl;
-    if (use_esdf)
-    {
-      updateESDF3d();
-      ROS_WARN("Finish ESDF built");
-      publishESDF();
-      ROS_WARN("Publish ESDF!");
-      bulid_esdf = true;
-    }
   }
 
   void getMapSize(Vecf<3> &size) { size = map_size; }
@@ -105,18 +97,10 @@ class MapUtil
   void setObs(Eigen::Vector3d pt)
   {
     int expand_size = 0;
-    // 3
     double coord_x = pt[0];
     double coord_y = pt[1];
     double coord_z = pt[2];
-    /*
-          bool isOccupied(const Veci<Dim> &pn) {
-    if (isOutside(pn))
-      return false;
-    else
-      return isOccupied(getIndex(pn));
-  }
-    */
+
     Veci<Dim> index3i = floatToInt(Vecf<Dim>(coord_x, coord_y, coord_z));
     if (isOutside(index3i)) return;
     for (int i = -expand_size; i <= expand_size; i++)
@@ -145,194 +129,7 @@ class MapUtil
     return Dim == 2 ? pn(0) + dim_(0) * pn(1)
                     : pn(0) + dim_(0) * pn(1) + dim_(0) * dim_(1) * pn(2);
   }
-  /// build esdf
-  void updateESDF3d()
-  {
-    Eigen::Vector3i min_esdf = Eigen::Vector3i(0, 0, 0);
-    Eigen::Vector3i max_esdf = Eigen::Vector3i(dim_(0) - 1, dim_(1) - 1, dim_(2) - 1);
-    /* ========== compute positive DT ========== */
-    for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
-    {
-      for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
-      {
-        // ROS_INFO("1111111111111111111111111111");
-        fillESDF(
-            [&](int z) {
-              return isOccupied(toAddress(x, y, z)) ? 0
-                                                    : std::numeric_limits<double>::max();
-            },
-            [&](int z, double val) { tmp_buffer1_[toAddress(x, y, z)] = val; },
-            min_esdf[2], max_esdf[2], 2);
-      }
-      // ROS_INFO("22222222222222222222222");
-    }
 
-    for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
-    {
-      for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
-      {
-        fillESDF([&](int y) { return tmp_buffer1_[toAddress(x, y, z)]; },
-                 [&](int y, double val) { tmp_buffer2_[toAddress(x, y, z)] = val; },
-                 min_esdf[1], max_esdf[1], 1);
-      }
-    }
-
-    for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
-    {
-      for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
-      {
-        fillESDF([&](int x) { return tmp_buffer2_[toAddress(x, y, z)]; },
-                 [&](int x, double val)
-                 { distance_buffer_[toAddress(x, y, z)] = res_ * std::sqrt(val); },
-                 min_esdf[0], max_esdf[0], 0);
-      }
-    }
-
-    /* ========== compute negative distance ========== */
-    /*for (int x = min_esdf(0); x <= max_esdf(0); ++x)
-      for (int y = min_esdf(1); y <= max_esdf(1); ++y)
-        for (int z = min_esdf(2); z <= max_esdf(2); ++z) {
-
-          int idx = toAddress(x, y, z);
-          if (occupancy_buffer_inflate_[idx] == 0) {
-            occupancy_buffer_neg[idx] = 1;
-
-          } else if (occupancy_buffer_inflate_[idx] == 1) {
-            occupancy_buffer_neg[idx] = 0;
-          } else {
-            ROS_ERROR("what?");
-          }
-        }*/
-
-    ros::Time t1, t2;
-
-    for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
-    {
-      for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
-      {
-        fillESDF(
-            [&](int z) {
-              return isFree(toAddress(x, y, z)) ? 0 : std::numeric_limits<double>::max();
-            },
-            [&](int z, double val) { tmp_buffer1_[toAddress(x, y, z)] = val; },
-            min_esdf[2], max_esdf[2], 2);
-      }
-    }
-
-    for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
-    {
-      for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
-      {
-        fillESDF([&](int y) { return tmp_buffer1_[toAddress(x, y, z)]; },
-                 [&](int y, double val) { tmp_buffer2_[toAddress(x, y, z)] = val; },
-                 min_esdf[1], max_esdf[1], 1);
-      }
-    }
-
-    for (int y = min_esdf[1]; y <= max_esdf[1]; y++)
-    {
-      for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
-      {
-        fillESDF([&](int x) { return tmp_buffer2_[toAddress(x, y, z)]; },
-                 [&](int x, double val)
-                 { distance_buffer_neg_[toAddress(x, y, z)] = res_ * std::sqrt(val); },
-                 min_esdf[0], max_esdf[0], 0);
-      }
-    }
-
-    /* ========== combine pos and neg DT ========== */
-    for (int x = min_esdf(0); x <= max_esdf(0); ++x)
-      for (int y = min_esdf(1); y <= max_esdf(1); ++y)
-        for (int z = min_esdf(2); z <= max_esdf(2); ++z)
-        {
-          int idx = toAddress(x, y, z);
-          distance_buffer_all_[idx] = distance_buffer_[idx];
-          if (distance_buffer_neg_[idx] > 0.0)
-            distance_buffer_all_[idx] += (-distance_buffer_neg_[idx] + res_);
-        }
-  }
-  template <typename F_get_val, typename F_set_val>
-  void fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int end, int dim)
-  {
-    int v[dim_(dim)];  // voxel number
-    double z[dim_(dim) + 1];
-    int k = start;
-    v[start] = start;
-    z[start] = -std::numeric_limits<double>::max();
-    z[start + 1] = std::numeric_limits<double>::max();
-    // ROS_INFO("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
-    for (int q = start + 1; q <= end; q++)
-    {
-      k++;
-      double s;
-
-      do
-      {
-        k--;
-        s = ((f_get_val(q) + q * q) - (f_get_val(v[k]) + v[k] * v[k])) /
-            (2 * q - 2 * v[k]);
-      } while (s <= z[k]);
-
-      k++;
-
-      v[k] = q;
-      z[k] = s;
-      z[k + 1] = std::numeric_limits<double>::max();
-    }
-    // ROS_INFO("bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb");
-    k = start;
-
-    for (int q = start; q <= end; q++)
-    {
-      while (z[k + 1] < q) k++;
-      double val = (q - v[k]) * (q - v[k]) + f_get_val(v[k]);
-      f_set_val(q, val);
-    }
-  }
-  void publishESDF()
-  {
-    double dist;
-    pcl::PointCloud<pcl::PointXYZI> cloud;
-    pcl::PointXYZI pt;
-    const double min_dist = 0.0;
-    const double max_dist = 4.0;
-    Eigen::Vector3i min_cut = Eigen::Vector3i(0, 0, 0);
-    Eigen::Vector3i max_cut = Eigen::Vector3i(dim_(0) - 1, dim_(1) - 1, dim_(2) - 1);
-    for (int x = min_cut(0); x <= max_cut(0); ++x)
-      for (int y = min_cut(1); y <= max_cut(1); ++y)
-      {
-        Vec3f pos;
-        pos = intToFloat(Vec3i(x, y, 1));
-        dist = getDistance(pos);
-        if (dist < min_dist) dist = min_dist;
-        if (dist > max_dist) dist = max_dist;
-        pt.x = pos(0);
-        pt.y = pos(1);
-        pt.z = pos(2);
-        pt.intensity = (dist - min_dist) / (max_dist - min_dist);
-        cloud.push_back(pt);
-        // }
-      }
-    cloud.width = cloud.points.size();
-    cloud.height = 1;
-    cloud.is_dense = true;
-    cloud.header.frame_id = world_frame_id;
-    sensor_msgs::PointCloud2 cloud_msg;
-    pcl::toROSMsg(cloud, cloud_msg);
-    esdf_pub_.publish(cloud_msg);
-  }
-  double getDistance(const Vec3f pos)
-  {
-    if (!bulid_esdf)
-    {
-      ROS_ERROR("esdf not be built!");
-      return -100000;
-    }
-    Vec3i id;
-    id = floatToInt(pos);
-    if (isOutside(id)) ROS_ERROR("out of the map!");
-    return distance_buffer_all_[getIndex(id)];
-  }
   /// Check if the given cell is outside of the map in i-the dimension
   bool isOutsideXYZ(const Veci<Dim> &n, int i) { return n(i) < 0 || n(i) >= dim_(i); }
   /// Check if the cell is free by index
@@ -360,6 +157,14 @@ class MapUtil
   /// Check if the given cell is occupied by coordinate
   bool isOccupied(const Veci<Dim> &pn)
   {
+    if (isOutside(pn))
+      return true;
+    else
+      return isOccupied(getIndex(pn));
+  }
+  bool isOccupied(const Vecf<Dim> &pos)
+  {
+    Veci<Dim> pn = floatToInt(pos);
     if (isOutside(pn))
       return true;
     else
@@ -622,7 +427,6 @@ class MapUtil
   std::vector<double> distance_buffer_all_;
   std::vector<double> tmp_buffer1_;
   std::vector<double> tmp_buffer2_;
-  bool use_esdf = false;
   std::string world_frame_id;
 
  protected:
@@ -640,9 +444,7 @@ class MapUtil
   /// Assume unknown cell has value -1
   int8_t val_unknown = -1;
   bool has_map = false;
-  bool bulid_esdf = false;
   ros::Subscriber point_cloud_sub_;
-  ros::Publisher esdf_pub_;
 };
 
 typedef MapUtil<2> OccMapUtil;

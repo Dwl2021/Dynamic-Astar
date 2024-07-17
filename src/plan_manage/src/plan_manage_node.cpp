@@ -20,8 +20,8 @@ void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& mar
   points.type = visualization_msgs::Marker::POINTS;
 
   // 设置标记的比例
-  points.scale.x = 5;  // 点的直径
-  points.scale.y = 5;
+  points.scale.x = 0.05;  // 点的直径
+  points.scale.y = 0.05;
 
   // 设置标记的颜色
   points.color.r = 1.0;
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
 
   Eigen::Vector3d start(0, 0, 1);
   Eigen::Vector3d goal(30, 20, 1);
-  Eigen::Vector3d zero(2, 0, 0);
+  Eigen::Vector3d zero(-2, 0, 0);
 
   // Initialize KinodynamicAstar
   std::shared_ptr<MapUtil<3>> map_util;
@@ -71,20 +71,30 @@ int main(int argc, char** argv)
   ROS_INFO("Map set");
   ros::Duration(1.0).sleep();
   ros::Rate r(10);
+  bool once = false;
   while (ros::ok())
   {
     if (map_util->has_map_())
     {
-      ROS_INFO("READY");
-      if (kinodynamic_astar.search(start, zero, zero, goal, zero, false))
+      if (!once)
       {
-        path = kinodynamic_astar.getKinoTraj(0.01);
-        ROS_INFO("Path found!");
-        visualizePath(path, marker_pub);
+        ROS_INFO("READY");
+        once = true;
+        if (kinodynamic_astar.search(start, zero, zero, goal, zero, false))
+        {
+          path = kinodynamic_astar.getKinoTraj(0.01);
+          ROS_INFO("Path found!");
+          visualizePath(path, marker_pub);
+        }
+        else
+        {
+          ROS_WARN("Path not found!");
+        }
       }
       else
       {
-        ROS_WARN("Path not found!");
+        ROS_INFO("Path PUBLISH!");
+        visualizePath(path, marker_pub);
       }
     }
     else
