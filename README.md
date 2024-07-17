@@ -12,7 +12,7 @@ More development details can be found in the ## Development section.
 ## Quick Start
 
 <p align="center">
-  <img src="./img1.png" alt="example" />
+  <img src="./assets/img1.png" alt="example" />
 </p>
 
 
