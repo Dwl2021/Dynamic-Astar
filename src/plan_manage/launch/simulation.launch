@@ -1,0 +1,28 @@
+<launch>
+  <!-- Launch the plan_manage_node from the plan_manage package -->
+  <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
+  </node>
+
+  <!-- Launch the visual_pcl node from the map_pcl package -->
+  <node name="visual_pcl" pkg="map_pcl" type="visual_pcl" output="screen">
+    <!-- Parameters for visual_pcl node -->
+    <param name="pcd_file_path" value="$(find map_pcl)/pcd/map3.pcd" />
+    <param name="frame_id" value="world" />
+    <param name="object_px" value="10" />
+    <param name="object_py" value="4" />
+    <param name="object_pz" value="1" />
+    <param name="object_axis_x" value="0" />
+    <param name="object_axis_y" value="0" />
+    <param name="object_axis_z" value="1" />
+    <param name="object_theta" value="0" />
+
+    <!-- Remap the topic -->
+    <remap from="~global_map" to="/global_map" />
+  </node>
+
+  <include file="$(find plan_manage)/launch/kstar.xml" />
+
+  <!-- Launch RViz with a specific configuration file -->
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find plan_manage)/config/rviz.rviz"
+    output="screen" />
+</launch>
