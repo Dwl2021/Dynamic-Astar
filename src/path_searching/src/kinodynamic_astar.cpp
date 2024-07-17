@@ -25,7 +25,6 @@
 
 #include <sstream>
 
-using namespace std;
 using namespace Eigen;
 
 KinodynamicAstar::~KinodynamicAstar()
@@ -68,7 +67,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     cur_node->time = time_start;
     cur_node->time_idx = timeToIndex(time_start);
     expanded_nodes_.insert(cur_node->index, cur_node->time_idx, cur_node);
-    // cout << "time start: " << time_start << endl;
+    // std::cout << "time start: " << time_start <<std::endl;
   }
   else
     expanded_nodes_.insert(cur_node->index, cur_node);
@@ -165,7 +164,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         durations.push_back(tau);
     }
 
-    // cout << "cur state:" << cur_state.head(3).transpose() << endl;
+    // std::cout << "cur state:" << cur_state.head(3).transpose() <<std::endl;
     for (int i = 0; i < inputs.size(); ++i)
       for (int j = 0; j < durations.size(); ++j)
       {
@@ -203,7 +202,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           if (init_search) std::cout << "same" << std::endl;
           continue;
         }
-        ROS_INFO("22222");
         // Check safety
         Eigen::Vector3d pos;
         Eigen::Matrix<double, 6, 1> xt;
@@ -281,7 +279,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
             use_node_num_ += 1;
             if (use_node_num_ == allocate_num_)
             {
-              cout << "run out of memory." << endl;
+              std::cout << "run out of memory." << std::endl;
               return NO_PATH;
             }
           }
@@ -301,16 +299,16 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           }
           else
           {
-            cout << "error type in searching: " << pro_node->node_state << endl;
+            std::cout << "error type in searching: " << pro_node->node_state << std::endl;
           }
         }
       }
     // init_search = false;
   }
 
-  cout << "open set empty, no path!" << endl;
-  cout << "use node num: " << use_node_num_ << endl;
-  cout << "iter num: " << iter_num_ << endl;
+  std::cout << "open set empty, no path!" << std::endl;
+  std::cout << "use node num: " << use_node_num_ << std::endl;
+  std::cout << "iter num: " << iter_num_ << std::endl;
   return NO_PATH;
 }
 
@@ -432,8 +430,8 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
 
       if (fabs(vel(dim)) > max_vel_ || fabs(acc(dim)) > max_acc_)
       {
-        // cout << "vel:" << vel(dim) << ", acc:" << acc(dim) << endl;
-        // return false;
+        // std::cout << "vel:" << vel(dim) << ", acc:" << acc(dim) <<std::endl;
+        //  return false;
       }
     }
 
@@ -546,8 +544,8 @@ void KinodynamicAstar::init()
   map_util_->getOrigin(origin_);
   map_util_->getMapSize(map_size_3d_);
 
-  cout << "origin_: " << origin_.transpose() << endl;
-  cout << "map size: " << map_size_3d_.transpose() << endl;
+  std::cout << "origin_: " << origin_.transpose() << std::endl;
+  std::cout << "map size: " << map_size_3d_.transpose() << std::endl;
 
   /* ---------- pre-allocated node ---------- */
   path_node_pool_.resize(allocate_num_);
@@ -644,7 +642,7 @@ void KinodynamicAstar::getSamples(double& ts, std::vector<Eigen::Vector3d>& poin
     T_sum += node->duration;
     node = node->parent;
   }
-  // cout << "duration:" << T_sum << endl;
+  // std::cout << "duration:" << T_sum <<std::endl;
 
   // Calculate boundary vel and acc
   Eigen::Vector3d end_vel, end_acc;
@@ -668,7 +666,7 @@ void KinodynamicAstar::getSamples(double& ts, std::vector<Eigen::Vector3d>& poin
 
   // Get point samples
   int seg_num = floor(T_sum / ts);
-  seg_num = max(8, seg_num);
+  seg_num = std::max(8, seg_num);
   ts = T_sum / double(seg_num);
   bool sample_shot_traj = is_shot_succ_;
   node = path_nodes_.back();
@@ -711,7 +709,7 @@ void KinodynamicAstar::getSamples(double& ts, std::vector<Eigen::Vector3d>& poin
       point_set.push_back(xt.head(3));
       t -= ts;
 
-      // cout << "t: " << t << ", t acc: " << T_accumulate << endl;
+      // std::cout << "t: " << t << ", t acc: " << T_accumulate <<std::endl;
       if (t < -1e-5 && node->parent->parent != NULL)
       {
         node = node->parent;

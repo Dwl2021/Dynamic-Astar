@@ -10,13 +10,6 @@
     <!-- Parameters for visual_pcl node -->
     <param name="pcd_file_path" value="$(find map_pcl)/pcd/map.pcd" />
     <param name="frame_id" value="world" />
-    <param name="object_px" value="10" />
-    <param name="object_py" value="4" />
-    <param name="object_pz" value="1" />
-    <param name="object_axis_x" value="0" />
-    <param name="object_axis_y" value="0" />
-    <param name="object_axis_z" value="1" />
-    <param name="object_theta" value="0" />
 
     <!-- Remap the topic -->
     <remap from="~global_map" to="/global_map" />

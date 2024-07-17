@@ -8,7 +8,13 @@ Based on a great algorithm, Fast-Planner, I extracted the path search method and
 
 More development details can be found in the ## Development section.
 
+
 ## Quick Start
+
+<p align="center">
+  <img src="./img1.png" alt="example" />
+</p>
+
 
 **Step 1**: Download the dependencies
 ```shell

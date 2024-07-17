@@ -4,8 +4,6 @@
 
 #include <Eigen/Core>
 
-using namespace fast_planner;
-
 void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& marker_pub);
 int main(int argc, char** argv)
 {
@@ -13,12 +11,14 @@ int main(int argc, char** argv)
   ros::NodeHandle nh;
   ros::Publisher path_pub = nh.advertise<visualization_msgs::Marker>("path", 1);
   std::vector<Eigen::Vector3d> path;
+  bool plan_once = false;
+  int success = 0;
 
   /*
     path searching example
   */
   Eigen::Vector3d start(0, 0, 1);
-  Eigen::Vector3d start_vel(0, 0, 0);
+  Eigen::Vector3d start_vel(0, 1, 0);
   Eigen::Vector3d start_acc(0, 0, 0);
   Eigen::Vector3d goal(30, 0, 1);
   Eigen::Vector3d goal_vel(-2, 0, 0);
@@ -36,8 +36,6 @@ int main(int argc, char** argv)
 
   ros::Duration(1.0).sleep();
   ros::Rate rate(10);
-  bool plan_once = false;
-  bool success = false;
   while (ros::ok())
   {
     if (map_util->has_map_()) /* if MAP is not ready */
@@ -50,7 +48,7 @@ int main(int argc, char** argv)
         /* main plan function */
         success =
             kinodynamic_astar.search(start, start_vel, start_acc, goal, goal_vel, false);
-        if (success)
+        if (success == 2)
         {
           path = kinodynamic_astar.getKinoTraj(0.01); /* sample */
           ROS_INFO("\033[1;32mPATH FOUND!\033[0m");
@@ -62,10 +60,10 @@ int main(int argc, char** argv)
       }
       else /* plan for onces */
       {
-        if (success)
+        if (success == 2)
         {
           ROS_INFO("PATH PUBLISH!");
-          visualizePath(path, marker_pub);
+          visualizePath(path, path_pub);
         }
       }
     }
@@ -79,7 +77,7 @@ int main(int argc, char** argv)
   return 0;
 }
 
-void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& marker_pub)
+void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& path_pub)
 {
   visualization_msgs::Marker points;
   points.header.frame_id = "world";
@@ -105,5 +103,5 @@ void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& mar
     points.points.push_back(p);
   }
 
-  mpath_pub.publish(points);
+  path_pub.publish(points);
 }
