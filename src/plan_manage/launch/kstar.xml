@@ -2,7 +2,7 @@
   <param name="map/x_size" value="50" />
   <param name="map/y_size" value="50" />
   <param name="map/z_size" value="2" />
-  <param name="map/resolution" value="0.2" />
+  <param name="map/resolution" value="0.1" />
   <param name="map/world_frame_id" value="world" />
 
   <!-- kinodynamic path searching -->
@@ -11,11 +11,11 @@
   <param name="search/max_vel" value="3" type="double" />
   <param name="search/max_acc" value="3" type="double" />
   <param name="search/w_time" value="10.0" type="double" />
-  <param name="search/horizon" value="7.0" type="double" />
+  <param name="search/horizon" value="100000" type="double" />
   <param name="search/lambda_heu" value="5.0" type="double" />
   <param name="search/resolution_astar" value="0.1" type="double" />
   <param name="search/time_resolution" value="0.8" type="double" />
   <param name="search/margin" value="0.2" type="double" />
-  <param name="search/allocate_num" value="100000" type="int" />
+  <param name="search/allocate_num" value="1000000" type="int" />
   <param name="search/check_num" value="5" type="int" />
 </launch>

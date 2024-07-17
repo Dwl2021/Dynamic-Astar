@@ -11,7 +11,7 @@ using namespace fast_planner;
 void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& marker_pub)
 {
   visualization_msgs::Marker points;
-  points.header.frame_id = "map";  // 根据你的需求调整
+  points.header.frame_id = "world";  // 根据你的需求调整
   points.header.stamp = ros::Time::now();
   points.ns = "path_visualization";
   points.action = visualization_msgs::Marker::ADD;
@@ -20,8 +20,8 @@ void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& mar
   points.type = visualization_msgs::Marker::POINTS;
 
   // 设置标记的比例
-  points.scale.x = 0.1;  // 点的直径
-  points.scale.y = 0.1;
+  points.scale.x = 5;  // 点的直径
+  points.scale.y = 5;
 
   // 设置标记的颜色
   points.color.r = 1.0;
@@ -51,9 +51,9 @@ int main(int argc, char** argv)
 
   std::vector<Eigen::Vector3d> path;
 
-  Eigen::Vector3d start(0, 0, 0);
-  Eigen::Vector3d goal(10, 10, 0);
-  Eigen::Vector3d zero(0, 0, 0);
+  Eigen::Vector3d start(0, 0, 1);
+  Eigen::Vector3d goal(30, 20, 1);
+  Eigen::Vector3d zero(2, 0, 0);
 
   // Initialize KinodynamicAstar
   std::shared_ptr<MapUtil<3>> map_util;
@@ -67,15 +67,16 @@ int main(int argc, char** argv)
   kinodynamic_astar.setParam(nh);
   ROS_INFO("Parameters set");
   kinodynamic_astar.setMap(map_util);
+  kinodynamic_astar.init();
   ROS_INFO("Map set");
-  ros::Duration(2.0).sleep();
+  ros::Duration(1.0).sleep();
   ros::Rate r(10);
   while (ros::ok())
   {
     if (map_util->has_map_())
     {
       ROS_INFO("READY");
-      if (kinodynamic_astar.search(start, zero, zero, goal, zero, true))
+      if (kinodynamic_astar.search(start, zero, zero, goal, zero, false))
       {
         path = kinodynamic_astar.getKinoTraj(0.01);
         ROS_INFO("Path found!");

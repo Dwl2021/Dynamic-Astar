@@ -46,7 +46,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
 {
   start_vel_ = start_v;
   start_acc_ = start_a;
-
   PathNodePtr cur_node = path_node_pool_[0];
   cur_node->parent = NULL;
   cur_node->state.head(3) = start_pt;
@@ -67,6 +66,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   open_set_.push(cur_node);
   use_node_num_ += 1;
 
+  ROS_INFO("22");
   if (dynamic)
   {
     time_origin_ = time_start;
@@ -78,13 +78,16 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   else
     expanded_nodes_.insert(cur_node->index, cur_node);
 
+  ROS_INFO("33");
   PathNodePtr neighbor = NULL;
   PathNodePtr terminate_node = NULL;
   bool init_search = init;
   const int tolerance = ceil(1 / resolution_);
 
+  ROS_INFO("44");
   while (!open_set_.empty())
   {
+    ROS_INFO("55");
     cur_node = open_set_.top();
 
     // Terminate?
@@ -93,6 +96,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
                     abs(cur_node->index(1) - end_index(1)) <= tolerance &&
                     abs(cur_node->index(2) - end_index(2)) <= tolerance;
 
+    ROS_INFO("66");
     if (reach_horizon || near_end)
     {
       terminate_node = cur_node;
@@ -105,6 +109,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (init_search) ROS_ERROR("Shot in first search loop!");
       }
     }
+
+    ROS_INFO("77");
     if (reach_horizon)
     {
       if (is_shot_succ_)
@@ -118,6 +124,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         return REACH_HORIZON;
       }
     }
+
+    ROS_INFO("88");
 
     if (near_end)
     {
@@ -141,7 +149,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     cur_node->node_state = IN_CLOSE_SET;
     iter_num_ += 1;
 
-    double res = 1 / 2.0, time_res = 1 / 1.0, time_res_init = 1 / 20.0;
+    double res = 1 / 3.0, time_res = 1 / 1.0, time_res_init = 1 / 20.0;
     Eigen::Matrix<double, 6, 1> cur_state = cur_node->state;
     Eigen::Matrix<double, 6, 1> pro_state;
     std::vector<PathNodePtr> tmp_expand_nodes;
@@ -149,6 +157,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     double pro_t;
     std::vector<Eigen::Vector3d> inputs;
     std::vector<double> durations;
+
+    ROS_INFO("99");
     if (init_search)
     {
       inputs.push_back(start_acc_);
@@ -175,23 +185,32 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
       for (int j = 0; j < durations.size(); ++j)
       {
         um = inputs[i];
+        ROS_INFO("um: %f, %f, %f", um(0), um(1), um(2));
         double tau = durations[j];
         stateTransit(cur_state, pro_state, um, tau);
-        pro_t = cur_node->time + tau;
+        pro_t = cur_node->time + tau;  // next node's time
 
         Eigen::Vector3d pro_pos = pro_state.head(3);
+        ROS_INFO("pro_pos: %f, %f, %f", pro_pos(0), pro_pos(1), pro_pos(2));
+
+        ROS_INFO("333333");
 
         // Check if in close set
         Eigen::Vector3i pro_id = posToIndex(pro_pos);
+        ROS_INFO("777777");
         int pro_t_id = timeToIndex(pro_t);
+        ROS_INFO("666666");
         PathNodePtr pro_node = dynamic ? expanded_nodes_.find(pro_id, pro_t_id)
                                        : expanded_nodes_.find(pro_id);
+        ROS_INFO("5555555");
         if (pro_node != NULL && pro_node->node_state == IN_CLOSE_SET)
         {
+          std::cout << "close" << std::endl;
           if (init_search) std::cout << "close" << std::endl;
           continue;
         }
 
+        ROS_INFO("444444");
         // Check maximal velocity
         Eigen::Vector3d pro_v = pro_state.tail(3);
         if (fabs(pro_v(0)) > max_vel_ || fabs(pro_v(1)) > max_vel_ ||
@@ -209,7 +228,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           if (init_search) std::cout << "same" << std::endl;
           continue;
         }
-
+        ROS_INFO("22222");
         // Check safety
         Eigen::Vector3d pos;
         Eigen::Matrix<double, 6, 1> xt;
@@ -220,7 +239,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           stateTransit(cur_state, xt, um, dt);
           pos = xt.head(3);
           Eigen::Vector3i coord = posToIndex(pos);
-          if (map_util_->isOccupied(coord) == 1)
+          if (map_util_->isOccupied(coord) == true)
           {
             is_occ = true;
             break;
@@ -231,7 +250,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           if (init_search) std::cout << "safe" << std::endl;
           continue;
         }
-
+        ROS_INFO("11111");
         double time_to_goal, tmp_g_score, tmp_f_score;
         tmp_g_score = (um.squaredNorm() + w_time_) * tau + cur_node->g_score;
         tmp_f_score = tmp_g_score +
@@ -457,7 +476,7 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
     //   return false;
     // }
     Eigen::Vector3i coord_int = coord.cast<int>();
-    if (map_util_->isOccupied(coord_int) == 1)
+    if (map_util_->isOccupied(coord_int) == true)
     {
       return false;
     }
@@ -561,6 +580,7 @@ void KinodynamicAstar::init()
 
   /* ---------- pre-allocated node ---------- */
   path_node_pool_.resize(allocate_num_);
+  ROS_INFO("allocate_num: %d", allocate_num_);
   for (int i = 0; i < allocate_num_; i++)
   {
     path_node_pool_[i] = new PathNode;
@@ -759,17 +779,13 @@ std::vector<PathNodePtr> KinodynamicAstar::getVisitedNodes()
 Eigen::Vector3i KinodynamicAstar::posToIndex(Eigen::Vector3d pt)
 {
   Vector3i idx = ((pt - origin_) * inv_resolution_).array().floor().cast<int>();
-
-  // idx << floor((pt(0) - origin_(0)) * inv_resolution_), floor((pt(1) -
-  // origin_(1)) * inv_resolution_),
-  //     floor((pt(2) - origin_(2)) * inv_resolution_);
-
   return idx;
 }
 
 int KinodynamicAstar::timeToIndex(double time)
 {
   int idx = floor((time - time_origin_) * inv_time_resolution_);
+  return idx;
 }
 
 void KinodynamicAstar::stateTransit(Eigen::Matrix<double, 6, 1>& state0,
