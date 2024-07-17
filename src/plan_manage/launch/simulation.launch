@@ -6,7 +6,7 @@
   <!-- Launch the visual_pcl node from the map_pcl package -->
   <node name="visual_pcl" pkg="map_pcl" type="visual_pcl" output="screen">
     <!-- Parameters for visual_pcl node -->
-    <param name="pcd_file_path" value="$(find map_pcl)/pcd/map3.pcd" />
+    <param name="pcd_file_path" value="$(find map_pcl)/pcd/map.pcd" />
     <param name="frame_id" value="world" />
     <param name="object_px" value="10" />
     <param name="object_py" value="4" />

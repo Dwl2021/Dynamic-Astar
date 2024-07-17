@@ -6,7 +6,7 @@
   <param name="map/world_frame_id" value="world" />
 
   <!-- kinodynamic path searching -->
-  <param name="search/max_tau" value="0.6" type="double" />
+  <param name="search/max_tau" value="0.2" type="double" />
   <param name="search/init_max_tau" value="0.8" type="double" />
   <param name="search/max_vel" value="5" type="double" />
   <param name="search/max_acc" value="5" type="double" />

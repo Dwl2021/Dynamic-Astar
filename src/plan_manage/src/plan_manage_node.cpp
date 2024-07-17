@@ -4,8 +4,7 @@
 #include <Eigen/Core>
 
 #include "path_searching/kinodynamic_astar.h"
-#include "plan_env/edt_environment.h"
-#include "plan_env/sdf_map.h"
+
 using namespace fast_planner;
 
 void visualizePath(const std::vector<Eigen::Vector3d>& path, ros::Publisher& marker_pub)

@@ -24,7 +24,6 @@
   <build_depend>std_msgs</build_depend>
   <build_depend>visualization_msgs</build_depend>
   <build_depend>path_searching</build_depend>
-  <build_depend>plan_env</build_depend>
 
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>nav_msgs</exec_depend>
@@ -34,7 +33,6 @@
   <exec_depend>std_msgs</exec_depend>
   <exec_depend>visualization_msgs</exec_depend>
   <exec_depend>path_searching</exec_depend>
-  <exec_depend>plan_env</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

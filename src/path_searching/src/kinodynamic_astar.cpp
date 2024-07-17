@@ -22,7 +22,6 @@
  */
 
 #include <path_searching/kinodynamic_astar.h>
-#include <plan_env/sdf_map.h>
 
 #include <sstream>
 
@@ -52,7 +51,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   cur_node->state.tail(3) = start_v;
   cur_node->index = posToIndex(start_pt);
   cur_node->g_score = 0.0;
-  ROS_INFO("11");
   Eigen::VectorXd end_state(6);
   Eigen::Vector3i end_index;
   double time_to_goal;
@@ -66,7 +64,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   open_set_.push(cur_node);
   use_node_num_ += 1;
 
-  ROS_INFO("22");
   if (dynamic)
   {
     time_origin_ = time_start;
@@ -78,16 +75,13 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   else
     expanded_nodes_.insert(cur_node->index, cur_node);
 
-  ROS_INFO("33");
   PathNodePtr neighbor = NULL;
   PathNodePtr terminate_node = NULL;
   bool init_search = init;
   const int tolerance = ceil(1 / resolution_);
 
-  ROS_INFO("44");
   while (!open_set_.empty())
   {
-    ROS_INFO("55");
     cur_node = open_set_.top();
 
     // Terminate?
@@ -95,8 +89,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     bool near_end = abs(cur_node->index(0) - end_index(0)) <= tolerance &&
                     abs(cur_node->index(1) - end_index(1)) <= tolerance &&
                     abs(cur_node->index(2) - end_index(2)) <= tolerance;
-
-    ROS_INFO("66");
     if (reach_horizon || near_end)
     {
       terminate_node = cur_node;
@@ -110,7 +102,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
       }
     }
 
-    ROS_INFO("77");
     if (reach_horizon)
     {
       if (is_shot_succ_)
@@ -124,8 +115,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         return REACH_HORIZON;
       }
     }
-
-    ROS_INFO("88");
 
     if (near_end)
     {
@@ -157,8 +146,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     double pro_t;
     std::vector<Eigen::Vector3d> inputs;
     std::vector<double> durations;
-
-    ROS_INFO("99");
     if (init_search)
     {
       inputs.push_back(start_acc_);
@@ -185,32 +172,22 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
       for (int j = 0; j < durations.size(); ++j)
       {
         um = inputs[i];
-        ROS_INFO("um: %f, %f, %f", um(0), um(1), um(2));
         double tau = durations[j];
         stateTransit(cur_state, pro_state, um, tau);
         pro_t = cur_node->time + tau;  // next node's time
 
         Eigen::Vector3d pro_pos = pro_state.head(3);
-        ROS_INFO("pro_pos: %f, %f, %f", pro_pos(0), pro_pos(1), pro_pos(2));
-
-        ROS_INFO("333333");
 
         // Check if in close set
         Eigen::Vector3i pro_id = posToIndex(pro_pos);
-        ROS_INFO("777777");
         int pro_t_id = timeToIndex(pro_t);
-        ROS_INFO("666666");
         PathNodePtr pro_node = dynamic ? expanded_nodes_.find(pro_id, pro_t_id)
                                        : expanded_nodes_.find(pro_id);
-        ROS_INFO("5555555");
         if (pro_node != NULL && pro_node->node_state == IN_CLOSE_SET)
         {
-          std::cout << "close" << std::endl;
-          if (init_search) std::cout << "close" << std::endl;
           continue;
         }
 
-        ROS_INFO("444444");
         // Check maximal velocity
         Eigen::Vector3d pro_v = pro_state.tail(3);
         if (fabs(pro_v(0)) > max_vel_ || fabs(pro_v(1)) > max_vel_ ||
@@ -246,10 +223,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         }
         if (is_occ)
         {
-          if (init_search) std::cout << "safe" << std::endl;
           continue;
         }
-        ROS_INFO("11111");
         double time_to_goal, tmp_g_score, tmp_f_score;
         tmp_g_score = (um.squaredNorm() + w_time_) * tau + cur_node->g_score;
         tmp_f_score = tmp_g_score +
