@@ -28,8 +28,6 @@
 using namespace std;
 using namespace Eigen;
 
-namespace fast_planner
-{
 KinodynamicAstar::~KinodynamicAstar()
 {
   for (int i = 0; i < allocate_num_; i++)
@@ -773,5 +771,3 @@ void KinodynamicAstar::stateTransit(Eigen::Matrix<double, 6, 1>& state0,
 
   state1 = phi_ * state0 + integral;
 }
-
-}  // namespace fast_planner

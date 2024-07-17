@@ -3,6 +3,8 @@
   <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
   </node>
 
+  <include file="$(find plan_manage)/launch/kstar.xml" />
+
   <!-- Launch the visual_pcl node from the map_pcl package -->
   <node name="visual_pcl" pkg="map_pcl" type="visual_pcl" output="screen">
     <!-- Parameters for visual_pcl node -->
@@ -19,8 +21,6 @@
     <!-- Remap the topic -->
     <remap from="~global_map" to="/global_map" />
   </node>
-
-  <include file="$(find plan_manage)/launch/kstar.xml" />
 
   <!-- Launch RViz with a specific configuration file -->
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find plan_manage)/config/rviz.rviz"

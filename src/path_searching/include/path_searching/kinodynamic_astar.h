@@ -1,7 +1,6 @@
 #ifndef _KINODYNAMIC_ASTAR_H
 #define _KINODYNAMIC_ASTAR_H
 
-// #include <path_searching/matrix_hash.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 
@@ -16,8 +15,6 @@
 
 #include "map_util.h"
 
-namespace fast_planner
-{
 // #define REACH_HORIZON 1
 // #define REACH_END 2
 // #define NO_PATH 3
@@ -197,7 +194,5 @@ class KinodynamicAstar
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-
-}  // namespace fast_planner
 
 #endif
