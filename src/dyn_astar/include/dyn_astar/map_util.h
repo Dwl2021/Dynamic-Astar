@@ -5,6 +5,7 @@
 #ifndef MAP_UTIL_H
 #define MAP_UTIL_H
 
+#include <dyn_astar/data_type.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <octomap/OcTreeKey.h>
@@ -15,7 +16,6 @@
 #include <octomap_msgs/conversions.h>
 #include <octomap_ros/conversions.h>
 #include <octomap_server/OctomapServer.h>
-#include <path_searching/data_type.h>
 #include <ros/console.h>
 #include <ros/ros.h>
 

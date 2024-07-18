@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(path_searching)
+project(dyn_astar)
 set(CMAKE_CXX_FLAGS "-std=c++14 ${CMAKE_CXX_FLAGS} -O3 -Wall")
 find_package(Eigen3 REQUIRED)
 find_package(PCL 1.7 REQUIRED)
@@ -16,7 +16,7 @@ find_package(catkin REQUIRED COMPONENTS
 
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES path_searching
+ LIBRARIES dyn_astar
 #  DEPENDS system_lib
 )
 
@@ -30,10 +30,10 @@ include_directories(
 
 set(CMAKE_CXX_FLAGS "-std=c++11 ${CMAKE_CXX_FLAGS} -O3 -Wall")
 
-add_library( path_searching 
+add_library( dyn_astar 
     src/kinodynamic_astar.cpp 
     # src/astar.cpp
     )
-target_link_libraries( path_searching
+target_link_libraries( dyn_astar
     ${catkin_LIBRARIES} 
     )  

@@ -21,7 +21,7 @@
  * along with Fast-Planner. If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <path_searching/kinodynamic_astar.h>
+#include <dyn_astar/kinodynamic_astar.h>
 
 #include <sstream>
 

@@ -1,4 +1,4 @@
-#include <path_searching/kinodynamic_astar.h>
+#include <dyn_astar/kinodynamic_astar.h>
 #include <ros/ros.h>
 #include <visualization_msgs/Marker.h>
 

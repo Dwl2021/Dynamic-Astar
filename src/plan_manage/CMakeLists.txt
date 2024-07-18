@@ -11,7 +11,7 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   std_msgs
   visualization_msgs
-  path_searching
+  dyn_astar
   cv_bridge
   pcl_ros
   pcl_conversions
