@@ -67,6 +67,13 @@ If you want to change your own point cloud, please modify the frame to `world` a
 
 Or you can modify the `map_util.h` file. Search for the `expand_size` variables and set them to 1, 2, or 3.
 
+If you want to adjust the size of map, please pay attention to the origin point in `map_util.h`
+```cpp
+origin_d_[0] = -map_size(0) / 2;
+origin_d_[1] = -map_size(1) / 2;
+origin_d_[2] = 0;
+```
+
 ## Reference
 
 Based on the project [Fast-Planner](https://github.com/HKUST-Aerial-Robotics/Fast-Planner).

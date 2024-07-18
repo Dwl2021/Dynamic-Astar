@@ -60,7 +60,7 @@ class MapUtil
     nh.param("map/world_frame_id", world_frame_id, std::string("world"));
     ROS_INFO("map size: %f, %f, %f", map_size(0), map_size(1), map_size(2));
     origin_d_[0] = -map_size(0) / 2;
-    origin_d_[1] = -10.0;
+    origin_d_[1] = -map_size(1) / 2;
     origin_d_[2] = 0;
     dim_(0) = map_size(0) / res_;
     dim_(1) = map_size(1) / res_;

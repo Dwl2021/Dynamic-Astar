@@ -36,10 +36,10 @@ int main(int argc, char** argv)
   nh_priv.param("start_acc_x", start_acc_x, 0.0);
   nh_priv.param("start_acc_y", start_acc_y, 0.0);
   nh_priv.param("start_acc_z", start_acc_z, 0.0);
-  nh_priv.param("goal_x", goal_x, 30.0);
-  nh_priv.param("goal_y", goal_y, -20.0);
+  nh_priv.param("goal_x", goal_x, 10.0);
+  nh_priv.param("goal_y", goal_y, 0.0);
   nh_priv.param("goal_z", goal_z, 1.0);
-  nh_priv.param("goal_vel_x", goal_vel_x, -3.0);
+  nh_priv.param("goal_vel_x", goal_vel_x, 0.0);
   nh_priv.param("goal_vel_y", goal_vel_y, 0.0);
   nh_priv.param("goal_vel_z", goal_vel_z, 0.0);
 
