@@ -1,5 +1,5 @@
 <launch>
-  <!-- Launch the plan_manage_node from the plan_manage package -->
+  <!-- launch the example node -->
   <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
     <param name="start_x" value="0" />
     <param name="start_y" value="0" />
@@ -18,19 +18,19 @@
     <param name="goal_vel_z" value="0" />
   </node>
 
-  <include file="$(find plan_manage)/launch/kstar.xml" />
+  <!-- parameters -->
+  <include file="$(find plan_manage)/launch/kastar.xml" />
 
-  <!-- Launch the visual_pcl node from the map_pcl package -->
-  <node name="visual_pcl" pkg="map_pcl" type="visual_pcl" output="screen">
-    <!-- Parameters for visual_pcl node -->
+  <!-- point cloud -->
+  <node name="visual_pcl" pkg="map_pcl"
+    type="visual_pcl" output="screen">
     <param name="pcd_file_path" value="$(find map_pcl)/pcd/map.pcd" />
     <param name="frame_id" value="world" />
-
-    <!-- Remap the topic -->
     <remap from="~global_map" to="/global_map" />
   </node>
 
-  <!-- Launch RViz with a specific configuration file -->
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find plan_manage)/config/rviz.rviz"
+
+  <node name="rviz" pkg="rviz" type="rviz"
+    args="-d $(find plan_manage)/config/rviz.rviz"
     output="screen" />
 </launch>

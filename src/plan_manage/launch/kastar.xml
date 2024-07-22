@@ -4,6 +4,9 @@
   <param name="map/x_size" value="100" />
   <param name="map/y_size" value="100" />
   <param name="map/z_size" value="2" />
+  <param name="map/origin_x" value="-50" />
+  <param name="map/origin_y" value="-50" />
+  <param name="map/origin_z" value="0" />
   <param name="map/resolution" value="$(arg resolution)" />
   <param name="map/world_frame_id" value="world" />
 

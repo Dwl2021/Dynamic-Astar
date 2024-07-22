@@ -5,7 +5,7 @@
 #ifndef MAP_UTIL_H
 #define MAP_UTIL_H
 
-#include <dyn_astar/data_type.h>
+#include <data_type/data_type.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <nav_msgs/Path.h>
 #include <octomap/OcTreeKey.h>
@@ -57,11 +57,11 @@ class MapUtil
     nh.param("map/x_size", map_size(0), 50.0);
     nh.param("map/y_size", map_size(1), 50.0);
     nh.param("map/z_size", map_size(2), 2.0);
+    nh.param("/map/origin_x", origin_d_(0), -25.0);
+    nh.param("/map/origin_y", origin_d_(1), -25.0);
+    nh.param("/map/origin_z", origin_d_(2), 0.0);
     nh.param("map/world_frame_id", world_frame_id, std::string("world"));
     ROS_INFO("map size: %f, %f, %f", map_size(0), map_size(1), map_size(2));
-    origin_d_[0] = -map_size(0) / 2;
-    origin_d_[1] = -map_size(1) / 2;
-    origin_d_[2] = 0;
     dim_(0) = map_size(0) / res_;
     dim_(1) = map_size(1) / res_;
     dim_(2) = map_size(2) / res_;

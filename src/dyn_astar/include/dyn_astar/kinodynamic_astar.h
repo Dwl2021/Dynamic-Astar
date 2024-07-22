@@ -13,7 +13,7 @@
 #include <unordered_map>
 #include <utility>
 
-#include "map_util.h"
+#include "map_util/map_util.h"
 
 // #define REACH_HORIZON 1
 // #define REACH_END 2
@@ -184,6 +184,9 @@ class KinodynamicAstar
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
 
   std::vector<Eigen::Vector3d> getKinoTraj(double delta_t);
+
+  // convert from std::vector<Eigen::Vector3d> to vec_Vec3f
+  static void convert_path(const std::vector<Eigen::Vector3d>& path, vec_Vec3f& result);
 
   void getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
                   std::vector<Eigen::Vector3d>& start_end_derivatives);

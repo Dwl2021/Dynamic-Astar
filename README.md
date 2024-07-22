@@ -40,7 +40,7 @@ catkin_make
 
 ### Set start and goal
 
-Modify in `src/plan_manage/src/plan_manage_node.cpp`
+Modify in `src/plan_manage/launch/example.launch`
 ```cpp
 Eigen::Vector3d start(0, 0, 1);
 Eigen::Vector3d start_vel(0, 0, 0);
@@ -51,7 +51,7 @@ Eigen::Vector3d goal_vel(-2, 0, 0);
 
 ### Path search parameters
 
-Modify in `src/plan_manage/launch/kstar.xml`
+Modify in `src/plan_manage/launch/kastar.xml`
 
 ### Map
 

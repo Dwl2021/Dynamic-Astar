@@ -769,3 +769,14 @@ void KinodynamicAstar::stateTransit(Eigen::Matrix<double, 6, 1>& state0,
 
   state1 = phi_ * state0 + integral;
 }
+
+void KinodynamicAstar::convert_path(const std::vector<Eigen::Vector3d>& result,
+                                    vec_Vec3f& path)
+{
+  path.clear();
+  path.reserve(result.size());
+  for (const auto& vec : result)
+  {
+    path.push_back(vec);
+  }
+}
