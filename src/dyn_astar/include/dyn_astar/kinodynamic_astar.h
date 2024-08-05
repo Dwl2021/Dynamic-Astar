@@ -123,7 +123,7 @@ class KinodynamicAstar
 
   /* ---------- record data ---------- */
   Eigen::Vector3d start_vel_, end_vel_, start_acc_, start_jer_;
-  Eigen::Matrix<double, 6, 6> phi_;  // state transit matrix
+  Eigen::Matrix<double, 9, 9> phi_;  // state transit matrix
   // shared_ptr<SDFMap> sdf_map;
   std::shared_ptr<MapUtil<3>> map_util_;
   bool is_shot_succ_ = false;
@@ -134,8 +134,8 @@ class KinodynamicAstar
   /* ---------- parameter ---------- */
   /* search */
   double max_tau_, init_max_tau_;
-  double max_vel_, max_acc_;
-  double w_time_, horizon_, lambda_heu_;
+  double max_vel_, max_acc_, max_jerk_;
+  double rho_, horizon_, lambda_heu_;
   int allocate_num_, check_num_;
   double tie_breaker_;
   bool optimistic_;
@@ -158,8 +158,8 @@ class KinodynamicAstar
   double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
 
   /* state propagation */
-  void stateTransit(Eigen::Matrix<double, 6, 1>& state0,
-                    Eigen::Matrix<double, 6, 1>& state1, Eigen::Vector3d um, double tau);
+  void stateTransit(Eigen::Matrix<double, 9, 1>& state0,
+                    Eigen::Matrix<double, 9, 1>& state1, Eigen::Vector3d um, double tau);
 
  public:
   KinodynamicAstar() {};

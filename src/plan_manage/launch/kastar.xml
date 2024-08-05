@@ -15,7 +15,8 @@
   <param name="search/init_max_tau" value="0.8" type="double" />
   <param name="search/max_vel" value="5" type="double" />
   <param name="search/max_acc" value="5" type="double" />
-  <param name="search/w_time" value="10.0" type="double" />
+  <param name="search/max_jrk" value="5" type="double" />
+  <param name="search/rho" value="10.0" type="double" />
   <param name="search/horizon" value="1000000" type="double" />
   <param name="search/lambda_heu" value="5.0" type="double" />
   <param name="search/resolution_astar" value="$(arg resolution)" type="double" />
