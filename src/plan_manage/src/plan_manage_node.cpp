@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
   while (ros::ok())
   {
-    /* visual start and goal points */
+    /* visual start and `oal points */
     visualizer.visualizeEndpoints(start, goal);
 
     /* Plan once */

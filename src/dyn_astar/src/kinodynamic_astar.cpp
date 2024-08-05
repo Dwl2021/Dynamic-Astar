@@ -62,6 +62,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   end_index = posToIndex(end_pt);
   cur_node->f_score =
       lambda_heu_ * estimateHeuristic(cur_node->state, end_state, time_to_goal);
+  ROS_INFO("heuristic: %f", cur_node->f_score);
   cur_node->node_state = IN_OPEN_SET;
   open_set_.push(cur_node);
   use_node_num_ += 1;
@@ -100,7 +101,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         // Check whether shot traj exist
         estimateHeuristic(cur_node->state, end_state, time_to_goal);
         computeShotTraj(cur_node->state, end_state, time_to_goal);
-        if (init_search) ROS_ERROR("Shot in first search loop!");
+        ROS_INFO("Shot in first search loop!");
       }
     }
 
@@ -139,6 +140,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     open_set_.pop();
     cur_node->node_state = IN_CLOSE_SET;
     iter_num_ += 1;
+    // ROS_INFO("iter num: %d", iter_num_);
 
     double res = 1 / 3.0, time_res = 1 / 1.0, time_res_init = 1 / 20.0;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
@@ -167,6 +169,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
             um << jerk_x, jerk_y, jerk_z;
             inputs.push_back(um);
           }
+      for (double tau = time_res * max_tau_; tau <= max_tau_; tau += time_res * max_tau_)
+        durations.push_back(tau);
     }
 
     // std::cout << "cur state:" << cur_state.head(3).transpose() <<std::endl;
@@ -187,6 +191,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
                                        : expanded_nodes_.find(pro_id);
         if (pro_node != NULL && pro_node->node_state == IN_CLOSE_SET)
         {
+          if (init_search) std::cout << "close" << std::endl;
           continue;
         }
 
@@ -234,6 +239,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         }
         if (is_occ)
         {
+          if (init_search) std::cout << "occ" << std::endl;
           continue;
         }
         double time_to_goal, tmp_g_score, tmp_f_score;
@@ -395,7 +401,7 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   for (auto t : ts)
   {
     if (t < t_bar) continue;
-    double c = -c1 / (3 * t * t * t) - c2 / (2 * t * t) - c3 / t + rho_ * t;
+    double c = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
     if (c < cost)
     {
       cost = c;
@@ -405,43 +411,45 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   optimal_time = t_d;
   return 1.0 * (1 + tie_breaker_) * cost;
 }
-// double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2,
-//                                            double& optimal_time)
-// {
-//   const Vector3d dp = x2.head(3) - x1.head(3);
-//   const Vector3d v0 = x1.segment(3, 3);
-//   const Vector3d v1 = x2.segment(3, 3);
 
-//   double c1 = -36 * dp.dot(dp);
-//   double c2 = 24 * (v0 + v1).dot(dp);
-//   double c3 = -4 * (v0.dot(v0) + v0.dot(v1) + v1.dot(v1));
-//   double c4 = 0;
-//   double c5 = rho_;
+double KinodynamicAstar::obvpCost(const Vector3d& p_o, const Vector3d& v_o,
+                                  const Vector3d& a_o, const Vector3d& p_f,
+                                  const Vector3d& v_f, const Vector3d& a_f, double T)
+{
+  double T2 = T * T;
+  double T3 = T2 * T;
+  double T4 = T3 * T;
+  double T6 = T3 * T3;
 
-//   std::vector<double> ts = quartic(c5, c4, c3, c2, c1);
+  double term1 = 3 * T4 * a_o.dot(a_o);
+  double term2 = -2 * T4 * a_o.dot(a_f);
+  double term3 = 3 * T4 * a_f.dot(a_f);
+  double term4 = 24 * T3 * a_o.dot(v_o);
+  double term5 = 16 * T3 * a_o.dot(v_f);
+  double term6 = -16 * T3 * a_f.dot(v_o);
+  double term7 = -24 * T3 * a_f.dot(v_f);
+  double term8 = 40 * T2 * a_o.dot(p_o);
+  double term9 = -40 * T2 * a_o.dot(p_f);
+  double term10 = -40 * T2 * a_f.dot(p_o);
+  double term11 = 40 * T2 * a_f.dot(p_f);
+  double term12 = 64 * T2 * v_o.dot(v_o);
+  double term13 = 112 * T2 * v_o.dot(v_f);
+  double term14 = 64 * T2 * v_f.dot(v_f);
+  double term15 = 240 * T * p_o.dot(v_o);
+  double term16 = 240 * T * p_o.dot(v_f);
+  double term17 = -240 * T * p_f.dot(v_o);
+  double term18 = -240 * T * p_f.dot(v_f);
+  double term19 = 240 * p_o.dot(p_o);
+  double term20 = -480 * p_o.dot(p_f);
+  double term21 = 240 * p_f.dot(p_f);
 
-//   double v_max = max_vel_ * 0.5;
-//   double t_bar = (x1.head(3) - x2.head(3)).lpNorm<Infinity>() / v_max;
-//   ts.push_back(t_bar);
+  double numerator = term1 + term2 + term3 + term4 + term5 + term6 + term7 + term8 +
+                     term9 + term10 + term11 + term12 + term13 + term14 + term15 +
+                     term16 + term17 + term18 + term19 + term20 + term21;
+  double denominator = T6;
 
-//   double cost = 100000000;
-//   double t_d = t_bar;
-
-//   for (auto t : ts)
-//   {
-//     if (t < t_bar) continue;
-//     double c = -c1 / (3 * t * t * t) - c2 / (2 * t * t) - c3 / t + rho_ * t;
-//     if (c < cost)
-//     {
-//       cost = c;
-//       t_d = t;
-//     }
-//   }
-
-//   optimal_time = t_d;
-
-//   return 1.0 * (1 + tie_breaker_) * cost;
-// }
+  return numerator / denominator;
+}
 
 bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2,
                                        double time_to_goal)
@@ -483,12 +491,8 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   Vector3i index;
 
   Eigen::MatrixXd Tm(6, 6);
-  Tm << 0, 1, 0, 0, 0, 0;
-  Tm << 0, 0, 2, 0, 0, 0;
-  Tm << 0, 0, 0, 3, 0, 0;
-  Tm << 0, 0, 0, 0, 4, 0;
-  Tm << 0, 0, 0, 0, 0, 5;
-  Tm << 0, 0, 0, 0, 0, 0;
+  Tm << 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
+      0, 0, 5, 0, 0, 0, 0, 0, 0;
 
   /* ---------- forward checking of trajectory ---------- */
   double t_delta = t_d / 10;

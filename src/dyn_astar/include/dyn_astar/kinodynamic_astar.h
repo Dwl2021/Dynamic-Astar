@@ -156,6 +156,9 @@ class KinodynamicAstar
   bool computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2,
                        double time_to_goal);
   double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
+  double obvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
+                  const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f,
+                  double T);
 
   /* state propagation */
   void stateTransit(Eigen::Matrix<double, 9, 1>& state0,
