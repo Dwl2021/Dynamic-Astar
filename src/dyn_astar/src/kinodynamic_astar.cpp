@@ -782,8 +782,8 @@ void KinodynamicAstar::getSamples(double& ts, std::vector<Eigen::Vector3d>& poin
     else
     {
       // samples on searched traj
-      Eigen::Matrix<double, 6, 1> x0 = node->parent->state;
-      Eigen::Matrix<double, 6, 1> xt;
+      Eigen::Matrix<double, 9, 1> x0 = node->parent->state;
+      Eigen::Matrix<double, 9sf, 1> xt;
       Vector3d ut = node->input;
 
       stateTransit(x0, xt, ut, t);
