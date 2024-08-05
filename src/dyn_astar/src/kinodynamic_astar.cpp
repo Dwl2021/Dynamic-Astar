@@ -36,24 +36,29 @@ KinodynamicAstar::~KinodynamicAstar()
 }
 
 int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
-                             Eigen::Vector3d start_a, Eigen::Vector3d end_pt,
-                             Eigen::Vector3d end_v, bool init, bool dynamic,
+                             Eigen::Vector3d start_a, Eigen::Vector3d start_j,
+                             Eigen::Vector3d end_pt, Eigen::Vector3d end_v,
+                             Eigen::Vector3d end_a, bool init, bool dynamic,
                              double time_start)
 {
   start_vel_ = start_v;
   start_acc_ = start_a;
+  start_jer = start_j;
+
   PathNodePtr cur_node = path_node_pool_[0];
   cur_node->parent = NULL;
   cur_node->state.head(3) = start_pt;
-  cur_node->state.tail(3) = start_v;
+  cur_node->state.segment(3, 3) = start_v;
+  cur_node->state.tail(3) = start_a;
   cur_node->index = posToIndex(start_pt);
   cur_node->g_score = 0.0;
-  Eigen::VectorXd end_state(6);
+  Eigen::VectorXd end_state(9);
   Eigen::Vector3i end_index;
   double time_to_goal;
 
   end_state.head(3) = end_pt;
-  end_state.tail(3) = end_v;
+  end_state.segment(3, 3) = end_v;
+  end_state.tail(3) = end_a;
   end_index = posToIndex(end_pt);
   cur_node->f_score =
       lambda_heu_ * estimateHeuristic(cur_node->state, end_state, time_to_goal);

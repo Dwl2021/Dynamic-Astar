@@ -28,7 +28,7 @@ class PathNode
  public:
   /* -------------------- */
   Eigen::Vector3i index;
-  Eigen::Matrix<double, 6, 1> state;
+  Eigen::Matrix<double, 9, 1> state;
   double g_score, f_score;
   Eigen::Vector3d input;
   double duration;
@@ -43,7 +43,7 @@ class PathNode
     parent = NULL;
     node_state = NOT_EXPAND;
   }
-  ~PathNode(){};
+  ~PathNode() {};
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 typedef PathNode* PathNodePtr;
@@ -122,7 +122,7 @@ class KinodynamicAstar
   std::vector<PathNodePtr> path_nodes_;
 
   /* ---------- record data ---------- */
-  Eigen::Vector3d start_vel_, end_vel_, start_acc_;
+  Eigen::Vector3d start_vel_, end_vel_, start_acc_, start_jer_;
   Eigen::Matrix<double, 6, 6> phi_;  // state transit matrix
   // shared_ptr<SDFMap> sdf_map;
   std::shared_ptr<MapUtil<3>> map_util_;
@@ -162,7 +162,7 @@ class KinodynamicAstar
                     Eigen::Matrix<double, 6, 1>& state1, Eigen::Vector3d um, double tau);
 
  public:
-  KinodynamicAstar(){};
+  KinodynamicAstar() {};
   ~KinodynamicAstar();
 
   enum
