@@ -134,7 +134,7 @@ class KinodynamicAstar
   /* ---------- parameter ---------- */
   /* search */
   double max_tau_, init_max_tau_;
-  double max_vel_, max_acc_, max_jerk_;
+  double max_vel_, max_acc_, max_jer_;
   double rho_, horizon_, lambda_heu_;
   int allocate_num_, check_num_;
   double tie_breaker_;

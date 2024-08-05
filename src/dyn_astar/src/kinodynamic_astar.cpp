@@ -158,12 +158,11 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     }
     else
     {
-      for (double jerk_x = -max_jerk_; jerk_x <= max_jerk_ + 1e-3;
-           jerk_x += max_jerk_ * res)
-        for (double jerk_y = -max_jerk_; jerk_y <= max_jerk_ + 1e-3;
-             jerk_y += max_jerk_ * res)
-          for (double jerk_z = -max_jerk_; jerk_z <= max_jerk_ + 1e-3;
-               jerk_z += max_jerk_ * res)
+      for (double jerk_x = -max_jer_; jerk_x <= max_jer_ + 1e-3; jerk_x += max_jer_ * res)
+        for (double jerk_y = -max_jer_; jerk_y <= max_jer_ + 1e-3;
+             jerk_y += max_jer_ * res)
+          for (double jerk_z = -max_jer_; jerk_z <= max_jer_ + 1e-3;
+               jerk_z += max_jer_ * res)
           {
             um << jerk_x, jerk_y, jerk_z;
             inputs.push_back(um);
@@ -334,7 +333,7 @@ void KinodynamicAstar::setParam(ros::NodeHandle& nh)
   nh.param("search/init_max_tau", init_max_tau_, -1.0);
   nh.param("search/max_vel", max_vel_, -1.0);
   nh.param("search/max_acc", max_acc_, -1.0);
-  nh.param("search/max_jerk", max_jerk_, -1.0);
+  nh.param("search/max_jer", max_jer_, -1.0);
   nh.param("search/rho", rho_, -1.0);
   nh.param("search/horizon", horizon_, -1.0);
   nh.param("search/resolution_astar", resolution_, -1.0);
