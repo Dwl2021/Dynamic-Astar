@@ -4,7 +4,7 @@
         {
             "name": "ROS: Launch",
             "request": "launch",
-            "target": "/home/dwl/dyn_a_star/src/plan_manage/launch/simulation.launch",
+            "target": "/home/dwl/dyn_a_star/src/plan_manage/launch/example.launch",
             "type": "ros"
         }
       ]

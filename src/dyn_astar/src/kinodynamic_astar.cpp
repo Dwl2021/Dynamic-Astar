@@ -43,7 +43,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
 {
   start_vel_ = start_v;
   start_acc_ = start_a;
-  start_jer = start_j;
+  start_jer_ = start_j;
 
   PathNodePtr cur_node = path_node_pool_[0];
   cur_node->parent = NULL;
@@ -630,8 +630,6 @@ void KinodynamicAstar::init()
   {
     path_node_pool_[i] = new PathNode;
   }
-
-  phi_ = Eigen::MatrixXd::Identity(6, 6);
   use_node_num_ = 0;
   iter_num_ = 0;
 }
@@ -710,114 +708,6 @@ std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
   }
 
   return state_list;
-}
-
-void KinodynamicAstar::getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
-                                  std::vector<Eigen::Vector3d>& start_end_derivatives)
-{
-  /* ---------- path duration ---------- */
-  double T_sum = 0.0;
-  if (is_shot_succ_) T_sum += t_shot_;
-  PathNodePtr node = path_nodes_.back();
-  while (node->parent != NULL)
-  {
-    T_sum += node->duration;
-    node = node->parent;
-  }
-  // std::cout << "duration:" << T_sum <<std::endl;
-
-  // Calculate boundary vel and acc
-  Eigen::Vector3d end_vel, end_acc;
-  double t;
-  if (is_shot_succ_)
-  {
-    t = t_shot_;
-    end_vel = end_vel_;
-    for (int dim = 0; dim < 3; ++dim)
-    {
-      Vector4d coe = coef_shot_.row(dim);
-      end_acc(dim) = 2 * coe(2) + 6 * coe(3) * t_shot_;
-    }
-  }
-  else
-  {
-    t = path_nodes_.back()->duration;
-    end_vel = node->state.tail(3);
-    end_acc = path_nodes_.back()->input;
-  }
-
-  // Get point samples
-  int seg_num = floor(T_sum / ts);
-  seg_num = std::max(8, seg_num);
-  ts = T_sum / double(seg_num);
-  bool sample_shot_traj = is_shot_succ_;
-  node = path_nodes_.back();
-
-  for (double ti = T_sum; ti > -1e-5; ti -= ts)
-  {
-    if (sample_shot_traj)
-    {
-      // samples on shot traj
-      Vector3d coord;
-      Vector4d poly1d, time;
-
-      for (int j = 0; j < 4; j++) time(j) = pow(t, j);
-
-      for (int dim = 0; dim < 3; dim++)
-      {
-        poly1d = coef_shot_.row(dim);
-        coord(dim) = poly1d.dot(time);
-      }
-
-      point_set.push_back(coord);
-      t -= ts;
-
-      /* end of segment */
-      if (t < -1e-5)
-      {
-        sample_shot_traj = false;
-        if (node->parent != NULL) t += node->duration;
-      }
-    }
-    else
-    {
-      // samples on searched traj
-      Eigen::Matrix<double, 9, 1> x0 = node->parent->state;
-      Eigen::Matrix<double, 9sf, 1> xt;
-      Vector3d ut = node->input;
-
-      stateTransit(x0, xt, ut, t);
-
-      point_set.push_back(xt.head(3));
-      t -= ts;
-
-      // std::cout << "t: " << t << ", t acc: " << T_accumulate <<std::endl;
-      if (t < -1e-5 && node->parent->parent != NULL)
-      {
-        node = node->parent;
-        t += node->duration;
-      }
-    }
-  }
-  reverse(point_set.begin(), point_set.end());
-
-  // calculate start acc
-  Eigen::Vector3d start_acc;
-  if (path_nodes_.back()->parent == NULL)
-  {
-    // no searched traj, calculate by shot traj
-    start_acc = 2 * coef_shot_.col(2);
-  }
-  else
-  {
-    // input of searched traj
-    start_acc = node->input;
-  }
-
-  start_end_derivatives.push_back(start_vel_);
-  start_end_derivatives.push_back(end_vel);
-  start_end_derivatives.push_back(start_acc);
-  start_end_derivatives.push_back(end_acc);
 }
 
 std::vector<PathNodePtr> KinodynamicAstar::getVisitedNodes()

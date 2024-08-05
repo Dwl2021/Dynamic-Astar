@@ -178,11 +178,10 @@ class KinodynamicAstar
   void init();
   void reset();
 
-  int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
-                               Eigen::Vector3d start_a, Eigen::Vector3d start_j,
-                               Eigen::Vector3d end_pt, Eigen::Vector3d end_v,
-                               Eigen::Vector3d end_a, bool init = false,
-                               bool dynamic = false, double time_start = -1.0);
+  int search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v, Eigen::Vector3d start_a,
+             Eigen::Vector3d start_j, Eigen::Vector3d end_pt, Eigen::Vector3d end_v,
+             Eigen::Vector3d end_a, bool init = false, bool dynamic = false,
+             double time_start = -1.0);
 
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
 
@@ -190,9 +189,6 @@ class KinodynamicAstar
 
   // convert from std::vector<Eigen::Vector3d> to vec_Vec3f
   static void convert_path(const std::vector<Eigen::Vector3d>& path, vec_Vec3f& result);
-
-  // void getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
-  //                 std::vector<Eigen::Vector3d>& start_end_derivatives);
 
   std::vector<PathNodePtr> getVisitedNodes();
 
