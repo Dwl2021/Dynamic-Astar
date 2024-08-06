@@ -56,7 +56,7 @@ class Visualizer
 
     start_marker.id = 1;
     start_marker.type = visualization_msgs::Marker::SPHERE;
-    start_marker.scale.x = start_marker.scale.y = start_marker.scale.z = 0.4;
+    start_marker.scale.x = start_marker.scale.y = start_marker.scale.z = 0.2;
     start_marker.color.r = 0.0;
     start_marker.color.g = 1.0;
     start_marker.color.b = 0.0;
@@ -67,7 +67,7 @@ class Visualizer
 
     goal_marker.id = 2;
     goal_marker.type = visualization_msgs::Marker::SPHERE;
-    goal_marker.scale.x = goal_marker.scale.y = goal_marker.scale.z = 0.4;
+    goal_marker.scale.x = goal_marker.scale.y = goal_marker.scale.z = 0.2;
     goal_marker.color.r = 0.0;
     goal_marker.color.g = 0.0;
     goal_marker.color.b = 1.0;
