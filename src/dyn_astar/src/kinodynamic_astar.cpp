@@ -142,7 +142,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     iter_num_ += 1;
     // ROS_INFO("iter num: %d", iter_num_);
 
-    double res = 1 / 5.0, time_res = 1 / 1.0, time_res_init = 1 / 20.0;
+    double res = 1 / 3.0, time_res = 1 / 1.0, time_res_init = 1 / 20.0;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
     Eigen::Matrix<double, 9, 1> pro_state;
     std::vector<PathNodePtr> tmp_expand_nodes;
