@@ -159,7 +159,8 @@ class KinodynamicAstar
   double obvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
                   const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f,
                   double T);
-
+  double bvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
+                 const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T);
   /* state propagation */
   void stateTransit(Eigen::Matrix<double, 9, 1>& state0,
                     Eigen::Matrix<double, 9, 1>& state1, Eigen::Vector3d um, double tau);

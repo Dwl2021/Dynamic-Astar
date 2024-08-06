@@ -401,7 +401,7 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   for (auto t : ts)
   {
     if (t < t_bar) continue;
-    double c = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
+    double c = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
     if (c < cost)
     {
       cost = c;
@@ -451,6 +451,86 @@ double KinodynamicAstar::obvpCost(const Vector3d& p_o, const Vector3d& v_o,
   return numerator / denominator;
 }
 
+double KinodynamicAstar::bvpCost(const Vector3d& p_o, const Vector3d& v_o,
+                                 const Vector3d& a_o, const Vector3d& p_f,
+                                 const Vector3d& v_f, const Vector3d& a_f, double T)
+{
+  /* ---------- get coefficient ---------- */
+  const Vector3d p0 = p_o;
+  const Vector3d v0 = v_o;
+  const Vector3d a0 = a_o;
+  const Vector3d p1 = p_f;
+  const Vector3d v1 = v_f;
+  const Vector3d a1 = a_f;
+  double t_d = T;
+  MatrixXd coef(3, 6);
+  end_vel_ = v1;
+
+  /*
+    p = c0+ c1t + c2 t^2 + c3 t^3 + c4t^4 + c5t^5
+  */
+
+  Vector3d c5 = -(12 * p0 - 12 * p1 + 6 * t_d * v1 + 6 * t_d * v0 - t_d * t_d * a1 +
+                  t_d * t_d * a0) /
+                (2 * pow(t_d, 5));
+  Vector3d c4 = (30 * p0 - 30 * p1 + 14 * t_d * v1 + 16 * t_d * v0 - 2 * t_d * t_d * a1 +
+                 3 * t_d * t_d * a0) /
+                (2 * pow(t_d, 4));
+  Vector3d c3 = -(20 * p0 - 20 * p1 + 8 * t_d * v1 + 12 * t_d * v0 - t_d * t_d * a1 +
+                  3 * t_d * t_d * a0) /
+                (2 * pow(t_d, 3));
+  Vector3d c2 = a0 / 2.0;
+  Vector3d c1 = v0;
+  Vector3d c0 = p0;
+
+  // Fill the coefficients matrix
+  coef.col(5) = c5;
+  coef.col(4) = c4;
+  coef.col(3) = c3;
+  coef.col(2) = c2;
+  coef.col(1) = c1;
+  coef.col(0) = c0;
+
+  Vector3d pos, jer;
+  Matrix<double, 6, 1> beta0, beta1, beta2, beta3;
+  VectorXd poly1d;
+  Vector3i index;
+  double s1, s2, s3, s4, s5;
+  double total_cost = 0;
+
+  Eigen::MatrixXd Tm(6, 6);
+  Tm << 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
+      0, 0, 5, 0, 0, 0, 0, 0, 0;
+
+  /* ---------- forward checking of trajectory ---------- */
+  double t_delta = 0.05;
+  for (double time = t_delta; time <= t_d; time += t_delta)
+  {
+    s1 = time;
+    s2 = s1 * s1;
+    // s3 = s2 * s1;
+    // s4 = s2 * s2;
+    // s5 = s2 * s3;
+    // beta0 << 1, s1, s2, s3, s4, s5;
+    beta3 << 0, 0, 0, 6, 24 * s1, 60 * s2;
+    // pos = coef * beta0;
+    jer = coef * beta3;
+    total_cost += jer.dot(jer);
+
+    // if (pos(0) < origin_(0) || pos(0) >= map_size_3d_(0) || pos(1) < origin_(1) ||
+    //     pos(1) >= map_size_3d_(1) || pos(2) < origin_(2) || pos(2) >= map_size_3d_(2))
+    // {
+    //   return inf;
+    // }
+
+    // if (map_util_->isOccupied(pos) == true)
+    // {
+    //   return inf;
+    // }
+  }
+  return total_cost;
+}
+
 bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2,
                                        double time_to_goal)
 {
@@ -487,7 +567,7 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   coef.col(0) = c0;
 
   Vector3d pos, vel, acc;
-  VectorXd poly1d, t, polyv, polya;
+  VectorXd poly1d, t;
   Vector3i index;
 
   Eigen::MatrixXd Tm(6, 6);
