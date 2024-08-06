@@ -1,8 +1,8 @@
 <launch>
   <!-- launch the example node -->
   <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
-    <param name="start_x" value="0" />
-    <param name="start_y" value="0" />
+    <param name="start_x" value="-5" />
+    <param name="start_y" value="2" />
     <param name="start_z" value="1" />
     <param name="start_vel_x" value="0" />
     <param name="start_vel_y" value="0" />
@@ -13,13 +13,13 @@
     <param name="start_jer_x" value="0" />
     <param name="start_jer_y" value="0" />
     <param name="start_jer_z" value="0" />
-    <param name="goal_x" value="20" />
+    <param name="goal_x" value="0" />
     <param name="goal_y" value="0" />
     <param name="goal_z" value="1" />
-    <param name="goal_vel_x" value="5" />
-    <param name="goal_vel_y" value="3" />
+    <param name="goal_vel_x" value="0" />
+    <param name="goal_vel_y" value="0" />
     <param name="goal_vel_z" value="0" />
-    <param name="goal_acc_x" value="3" />
+    <param name="goal_acc_x" value="0" />
     <param name="goal_acc_y" value="5" />
     <param name="goal_acc_z" value="0" />
   </node>

@@ -5,7 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded: ~
       Splitter Ratio: 0.5
-    Tree Height: 831
+    Tree Height: 363
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -90,7 +90,7 @@ Visualization Manager:
       Marker Topic: /start_point
       Name: Marker
       Namespaces:
-        {}
+        endpoints_visualization: true
       Queue Size: 100
       Value: true
     - Class: rviz/Marker
@@ -98,7 +98,7 @@ Visualization Manager:
       Marker Topic: /end_point
       Name: Marker
       Namespaces:
-        {}
+        endpoints_visualization: true
       Queue Size: 100
       Value: true
   Enabled: true
@@ -129,7 +129,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 22.809160232543945
+      Distance: 33.77595520019531
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -145,9 +145,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.8684827089309692
+      Pitch: 0.39348331093788147
       Target Frame: <Fixed Frame>
-      Yaw: 1.7477046251296997
+      Yaw: 3.612706422805786
     Saved: ~
 Window Geometry:
   Displays:
@@ -165,5 +165,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1641
-  X: 3304
+  X: 837
   Y: 98
