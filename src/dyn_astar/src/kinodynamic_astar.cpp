@@ -81,7 +81,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   PathNodePtr neighbor = NULL;
   PathNodePtr terminate_node = NULL;
   bool init_search = init;
-  const int tolerance = ceil(1 / resolution_);
+  const int tolerance = ceil(tolerance_ / resolution_);
 
   while (!open_set_.empty())
   {
@@ -94,14 +94,14 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
                     abs(cur_node->index(2) - end_index(2)) <= tolerance;
     if (reach_horizon || near_end)
     {
-      terminate_node = cur_node;
-      retrievePath(terminate_node);
       if (near_end)
       {
         // Check whether shot traj exist
         estimateHeuristic(cur_node->state, end_state, time_to_goal);
         computeShotTraj(cur_node->state, end_state, time_to_goal);
-        ROS_INFO("Shot in first search loop!");
+        ROS_INFO("Shot!!!!");
+        std::cout << "current state: " << cur_node->state.head(3).transpose()
+                  << std::endl;
       }
     }
 
@@ -123,18 +123,23 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     {
       if (is_shot_succ_)
       {
+        terminate_node = cur_node;
+        retrievePath(terminate_node);
+        std::cout << "current state: " << cur_node->state.head(3).transpose()
+                  << std::endl;
+        std::cout << "end state : " << end_state.head(3).transpose() << std::endl;
         std::cout << "reach end" << std::endl;
         return REACH_END;
       }
       else if (cur_node->parent != NULL)
       {
-        std::cout << "near end" << std::endl;
-        return NEAR_END;
+        // std::cout << "near end" << std::endl;
+        // return NEAR_END;
       }
       else
       {
-        std::cout << "no path" << std::endl;
-        return NO_PATH;
+        // std::cout << "no path" << std::endl;
+        // return NO_PATH;
       }
     }
     open_set_.pop();
@@ -348,6 +353,7 @@ void KinodynamicAstar::setParam(ros::NodeHandle& nh)
   nh.param("search/allocate_num", allocate_num_, -1);
   nh.param("search/check_num", check_num_, -1);
   nh.param("search/optimistic", optimistic_, true);
+  nh.param("search/tolerance", tolerance_, 1.0);
   tie_breaker_ = 1.0 + 1.0 / 10000;
 
   double vel_margin;
@@ -491,43 +497,30 @@ double KinodynamicAstar::bvpCost(const Vector3d& p_o, const Vector3d& v_o,
   coef.col(1) = c1;
   coef.col(0) = c0;
 
-  Vector3d pos, jer;
+  Vector3d pos, jer, acc;
   Matrix<double, 6, 1> beta0, beta1, beta2, beta3;
   VectorXd poly1d;
   Vector3i index;
   double s1, s2, s3, s4, s5;
   double total_cost = 0;
-
-  Eigen::MatrixXd Tm(6, 6);
-  Tm << 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
-      0, 0, 5, 0, 0, 0, 0, 0, 0;
-
   /* ---------- forward checking of trajectory ---------- */
   double t_delta = 0.05;
   for (double time = t_delta; time <= t_d; time += t_delta)
   {
     s1 = time;
     s2 = s1 * s1;
-    // s3 = s2 * s1;
+    s3 = s2 * s1;
     // s4 = s2 * s2;
     // s5 = s2 * s3;
     // beta0 << 1, s1, s2, s3, s4, s5;
+    // beta2 << 0, 0, 2, 6 * s1, 12 * s2, 20 * s3;
     beta3 << 0, 0, 0, 6, 24 * s1, 60 * s2;
     // pos = coef * beta0;
     jer = coef * beta3;
-    total_cost += jer.dot(jer);
-
-    // if (pos(0) < origin_(0) || pos(0) >= map_size_3d_(0) || pos(1) < origin_(1) ||
-    //     pos(1) >= map_size_3d_(1) || pos(2) < origin_(2) || pos(2) >= map_size_3d_(2))
-    // {
-    //   return inf;
-    // }
-
-    // if (map_util_->isOccupied(pos) == true)
-    // {
-    //   return inf;
-    // }
+    // acc = coef * beta2;
+    total_cost += jer.squaredNorm() * t_delta;
   }
+  total_cost += rho_ * T;
   return total_cost;
 }
 
@@ -542,6 +535,8 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   const Vector3d v1 = state2.segment(3, 3);
   const Vector3d a1 = state2.tail(3);
   double t_d = time_to_goal;
+  // t_d = 10;
+  std::cout << "t_d: " << t_d << std::endl;
   MatrixXd coef(3, 6);
   end_vel_ = v1;
 
@@ -566,34 +561,30 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   coef.col(1) = c1;
   coef.col(0) = c0;
 
-  Vector3d pos, vel, acc;
+  Vector3d pos, vel, acc, jer;
+  Matrix<double, 6, 1> beta0, beta1, beta2, beta3;
   VectorXd poly1d, t;
   Vector3i index;
-
-  Eigen::MatrixXd Tm(6, 6);
-  Tm << 0, 1, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 3, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0,
-      0, 0, 5, 0, 0, 0, 0, 0, 0;
+  double s1, s2, s3, s4, s5;
 
   /* ---------- forward checking of trajectory ---------- */
-  double t_delta = t_d / 10;
+  double t_delta = 0.05;
   for (double time = t_delta; time <= t_d; time += t_delta)
   {
-    t = VectorXd::Zero(6);
-    for (int j = 0; j < 6; j++) t(j) = pow(time, j);
+    s1 = time;
+    s2 = s1 * s1;
+    s3 = s2 * s1;
+    s4 = s2 * s2;
+    s5 = s2 * s3;
+    beta0 << 1, s1, s2, s3, s4, s5;
+    beta1 << 0, 1, 2 * s1, 3 * s2, 4 * s3, 5 * s4;
+    beta2 << 0, 0, 2, 6 * s1, 12 * s2, 20 * s3;
+    beta3 << 0, 0, 0, 6, 24 * s1, 60 * s2;
 
-    for (int dim = 0; dim < 3; dim++)
-    {
-      poly1d = coef.row(dim);
-      pos(dim) = poly1d.dot(t);
-      vel(dim) = (Tm * poly1d).dot(t);
-      acc(dim) = (Tm * Tm * poly1d).dot(t);
-
-      if (fabs(vel(dim)) > max_vel_ || fabs(acc(dim)) > max_acc_)
-      {
-        // std::cout << "vel:" << vel(dim) << ", acc:" << acc(dim) <<std::endl;
-        //  return false;
-      }
-    }
+    pos = coef * beta0;
+    vel = coef * beta1;
+    acc = coef * beta2;
+    jer = coef * beta3;
 
     if (pos(0) < origin_(0) || pos(0) >= map_size_3d_(0) || pos(1) < origin_(1) ||
         pos(1) >= map_size_3d_(1) || pos(2) < origin_(2) || pos(2) >= map_size_3d_(2))
@@ -601,9 +592,11 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
       return false;
     }
 
-    // if (edt_environment_->evaluateCoarseEDT(coord, -1.0) <= margin_) {
-    //   return false;
-    // }
+    if (vel.norm() > max_vel_ || acc.norm() > max_acc_ || jer.norm() > max_jer_)
+    {
+      return false;
+    }
+
     if (map_util_->isOccupied(pos) == true)
     {
       return false;

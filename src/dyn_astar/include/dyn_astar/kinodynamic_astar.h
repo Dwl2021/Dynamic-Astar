@@ -137,6 +137,7 @@ class KinodynamicAstar
   double max_vel_, max_acc_, max_jer_;
   double rho_, horizon_, lambda_heu_;
   int allocate_num_, check_num_;
+  double tolerance_;
   double tie_breaker_;
   bool optimistic_;
 
