@@ -728,6 +728,7 @@ void KinodynamicAstar::setMap(const std::shared_ptr<MapUtil<3>>& map_util)
 {
   this->map_util_ = map_util;
 }
+bool KinodynamicAstar::hasMap() { return map_util_->has_map_(); }
 
 void KinodynamicAstar::reset()
 {
@@ -750,9 +751,10 @@ void KinodynamicAstar::reset()
   has_path_ = false;
 }
 
-std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
+double KinodynamicAstar::getKinoTraj(double delta_t, std::vector<Eigen::Vector3d>& path)
 {
   std::vector<Vector3d> state_list;
+  double total_time;
 
   /* ---------- get traj of searching ---------- */
   PathNodePtr node = path_nodes_.back();
@@ -762,6 +764,7 @@ std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
   {
     Vector3d ut = node->input;
     double duration = node->duration;
+    total_time += duration;
     x0 = node->parent->state;
 
     for (double t = duration; t >= -1e-5; t -= delta_t)
@@ -777,7 +780,7 @@ std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
   {
     Vector3d coord;
     VectorXd poly1d, time(6);
-
+    total_time += t_shot_;
     for (double t = delta_t; t <= t_shot_; t += delta_t)
     {
       /*
@@ -795,9 +798,11 @@ std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
   else
   {
     std::cout << "no shot traj" << std::endl;
+    return inf;
   }
+  path = state_list;
 
-  return state_list;
+  return total_time;
 }
 
 std::vector<PathNodePtr> KinodynamicAstar::getVisitedNodes()

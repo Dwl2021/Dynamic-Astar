@@ -189,6 +189,7 @@ class KinodynamicAstar
              double time_start = -1.0);
 
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
+  bool hasMap();
 
   std::vector<Eigen::Vector3d> getKinoTraj(double delta_t);
 
