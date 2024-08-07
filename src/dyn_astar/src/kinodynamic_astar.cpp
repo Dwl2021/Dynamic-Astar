@@ -536,9 +536,8 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
 {
   /* ---------- get coefficient ---------- */
   const Vector3d p0 = state1.head(3);
-  // const Vector3d v0 = state1.segment(3, 3);
+  const Vector3d v0 = state1.segment(3, 3);
   // const Vector3d a0 = state1.tail(3);
-  const Vector3d v0 = Vector3d::Zero();
   const Vector3d a0 = Vector3d::Zero();
   const Vector3d p1 = state2.head(3);
   const Vector3d v1 = state2.segment(3, 3);

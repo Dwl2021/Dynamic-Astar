@@ -69,7 +69,7 @@ int main(int argc, char** argv)
       if (success == 2)
       {
         /* vec_Vec3f */
-        path = kastar.getKinoTraj(0.01);
+        kastar.getKinoTraj(0.01, path);
         /* [optional] convert from vector<Eigen::Vector3d> to vec_Vec3f */
         kastar.convert_path(path, path_optional);
 

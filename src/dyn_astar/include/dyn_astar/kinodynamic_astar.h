@@ -191,7 +191,7 @@ class KinodynamicAstar
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
   bool hasMap();
 
-  std::vector<Eigen::Vector3d> getKinoTraj(double delta_t);
+  double getKinoTraj(double delta_t, std::vector<Eigen::Vector3d>& path);
 
   // convert from std::vector<Eigen::Vector3d> to vec_Vec3f
   static void convert_path(const std::vector<Eigen::Vector3d>& path, vec_Vec3f& result);
