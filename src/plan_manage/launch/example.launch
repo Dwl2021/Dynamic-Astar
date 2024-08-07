@@ -13,14 +13,14 @@
     <param name="start_jer_x" value="0" />
     <param name="start_jer_y" value="0" />
     <param name="start_jer_z" value="0" />
-    <param name="goal_x" value="0.0" />
-    <param name="goal_y" value="0.3" />
+    <param name="goal_x" value="-0.3" />
+    <param name="goal_y" value="0.0" />
     <param name="goal_z" value="0.8" />
-    <param name="goal_vel_x" value="2" />
-    <param name="goal_vel_y" value="0" />
+    <param name="goal_vel_x" value="0" />
+    <param name="goal_vel_y" value="5" />
     <param name="goal_vel_z" value="0" />
-    <param name="goal_acc_x" value="1" />
-    <param name="goal_acc_y" value="5" />
+    <param name="goal_acc_x" value="-3" />
+    <param name="goal_acc_y" value="0" />
     <param name="goal_acc_z" value="0" />
   </node>
 
@@ -31,8 +31,8 @@
   <arg name="object_py" default="0" />
   <arg name="object_pz" default="0.8" />
 
-  <arg name="object_axis_x" default="1.0" />
-  <arg name="object_axis_y" default="0.0" />
+  <arg name="object_axis_x" default="0.0" />
+  <arg name="object_axis_y" default="1.0" />
   <arg name="object_axis_z" default="0.0" />
   <arg name="object_theta" default="-1.3" />
 
