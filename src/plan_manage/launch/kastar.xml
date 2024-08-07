@@ -3,7 +3,7 @@
 
   <param name="map/x_size" value="12" />
   <param name="map/y_size" value="8" />
-  <param name="map/z_size" value="2" />
+  <param name="map/z_size" value="1" />
   <param name="map/origin_x" value="-6" />
   <param name="map/origin_y" value="-4" />
   <param name="map/origin_z" value="0.5" />
@@ -21,7 +21,8 @@
   <param name="search/lambda_heu" value="5.0" type="double" />
   <param name="search/resolution_astar" value="$(arg resolution)" type="double" />
   <param name="search/time_resolution" value="0.8" type="double" />
-  <param name="search/margin" value="0.2" type="double" />
+  <param name="search/vel_margin" value="1" type="double" />
+  <param name="search/acc_margin" value="2" type="double" />
   <param name="search/allocate_num" value="1000000" type="int" />
   <param name="search/check_num" value="5" type="int" />
   <param name="search/tolerance" value="3" type="double" />

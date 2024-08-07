@@ -122,7 +122,7 @@ class KinodynamicAstar
   std::vector<PathNodePtr> path_nodes_;
 
   /* ---------- record data ---------- */
-  Eigen::Vector3d start_vel_, end_vel_, start_acc_, start_jer_;
+  Eigen::Vector3d start_vel_, end_vel_, end_pos_, start_acc_, start_jer_;
   Eigen::Matrix<double, 9, 9> phi_;  // state transit matrix
   // shared_ptr<SDFMap> sdf_map;
   std::shared_ptr<MapUtil<3>> map_util_;

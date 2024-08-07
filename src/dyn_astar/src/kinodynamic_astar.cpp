@@ -55,6 +55,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   Eigen::VectorXd end_state(9);
   Eigen::Vector3i end_index;
   double time_to_goal;
+  end_pos_ = end_pt;
 
   end_state.head(3) = end_pt;
   end_state.segment(3, 3) = end_v;
@@ -99,6 +100,10 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         // Check whether shot traj exist
         estimateHeuristic(cur_node->state, end_state, time_to_goal);
         computeShotTraj(cur_node->state, end_state, time_to_goal);
+        if (!is_shot_succ_)
+        {
+          computeShotTraj(cur_node->state, end_state, time_to_goal * 1.2);
+        }
         ROS_INFO("Shot!!!!");
         std::cout << "current state: " << cur_node->state.head(3).transpose()
                   << std::endl;
@@ -356,9 +361,11 @@ void KinodynamicAstar::setParam(ros::NodeHandle& nh)
   nh.param("search/tolerance", tolerance_, 1.0);
   tie_breaker_ = 1.0 + 1.0 / 10000;
 
-  double vel_margin;
+  double vel_margin, acc_margin;
   nh.param("search/vel_margin", vel_margin, 0.0);
+  nh.param("search/acc_margin", acc_margin, -1.0);
   max_vel_ += vel_margin;
+  max_acc_ += acc_margin;
 }
 
 void KinodynamicAstar::retrievePath(PathNodePtr end_node)
@@ -529,8 +536,10 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
 {
   /* ---------- get coefficient ---------- */
   const Vector3d p0 = state1.head(3);
-  const Vector3d v0 = state1.segment(3, 3);
-  const Vector3d a0 = state1.tail(3);
+  // const Vector3d v0 = state1.segment(3, 3);
+  // const Vector3d a0 = state1.tail(3);
+  const Vector3d v0 = Vector3d::Zero();
+  const Vector3d a0 = Vector3d::Zero();
   const Vector3d p1 = state2.head(3);
   const Vector3d v1 = state2.segment(3, 3);
   const Vector3d a1 = state2.tail(3);
@@ -568,7 +577,7 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   double s1, s2, s3, s4, s5;
 
   /* ---------- forward checking of trajectory ---------- */
-  double t_delta = 0.05;
+  double t_delta = t_d / 100;
   for (double time = t_delta; time <= t_d; time += t_delta)
   {
     s1 = time;
@@ -592,13 +601,18 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
       return false;
     }
 
-    if (vel.norm() > max_vel_ || acc.norm() > max_acc_ || jer.norm() > max_jer_)
+    if (vel.norm() > max_vel_ || acc.norm() > max_acc_)
     {
       return false;
     }
 
     if (map_util_->isOccupied(pos) == true)
     {
+      return false;
+    }
+    if ((pos - end_pos_).norm() < 1 && vel.norm() < 0.1)
+    {
+      std::cout << "11111111111" << std::endl;
       return false;
     }
   }
