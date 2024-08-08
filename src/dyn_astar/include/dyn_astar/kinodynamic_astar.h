@@ -134,7 +134,7 @@ class KinodynamicAstar
   /* ---------- parameter ---------- */
   /* search */
   double max_tau_, init_max_tau_;
-  double max_vel_, max_acc_, max_jer_;
+  double max_vel_, max_acc_, max_jer_, max_omega_;
   double rho_, horizon_, lambda_heu_;
   int allocate_num_, check_num_;
   double tolerance_;
@@ -154,17 +154,17 @@ class KinodynamicAstar
   /* shot trajectory */
   std::vector<double> cubic(double a, double b, double c, double d);
   std::vector<double> quartic(double a, double b, double c, double d, double e);
-  bool computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2,
-                       double time_to_goal);
-  double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
-  double obvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
-                  const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f,
-                  double T);
+  bool computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2, double time);
+  double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time,
+                           bool& suit);
+
   double bvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
-                 const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T);
+                 const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T,
+                 double& max_omega);
   /* state propagation */
   void stateTransit(Eigen::Matrix<double, 9, 1>& state0,
                     Eigen::Matrix<double, 9, 1>& state1, Eigen::Vector3d um, double tau);
+  Eigen::MatrixXd f_DN(const Eigen::Vector3d& x);
 
  public:
   KinodynamicAstar() {};

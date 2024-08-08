@@ -54,7 +54,7 @@ Visualization Manager:
       Marker Topic: path
       Name: Marker
       Namespaces:
-        {}
+        path_visualization: true
       Queue Size: 100
       Value: true
     - Alpha: 1
@@ -129,7 +129,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 11.547628402709961
+      Distance: 13.339508056640625
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -145,9 +145,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6614940762519836
+      Pitch: 1.0264939069747925
       Target Frame: <Fixed Frame>
-      Yaw: 3.1219303607940674
+      Yaw: 4.70192289352417
     Saved: ~
 Window Geometry:
   Displays:
@@ -165,5 +165,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1641
-  X: 837
-  Y: 98
+  X: 2764
+  Y: 138
