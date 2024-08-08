@@ -53,14 +53,14 @@ class MapUtil
       ROS_ERROR("SEARCH MUST BE 3D!");
     }
     map_size = Eigen::Vector3d(0, 0, 0);
-    nh.param("map/resolution", res_, 0.2);
-    nh.param("map/x_size", map_size(0), 50.0);
-    nh.param("map/y_size", map_size(1), 50.0);
-    nh.param("map/z_size", map_size(2), 2.0);
+    nh.param("/map/resolution", res_, 0.2);
+    nh.param("/map/x_size", map_size(0), 50.0);
+    nh.param("/map/y_size", map_size(1), 50.0);
+    nh.param("/map/z_size", map_size(2), 2.0);
     nh.param("/map/origin_x", origin_d_(0), -25.0);
     nh.param("/map/origin_y", origin_d_(1), -25.0);
     nh.param("/map/origin_z", origin_d_(2), 0.0);
-    nh.param("map/world_frame_id", world_frame_id, std::string("world"));
+    nh.param("/map/world_frame_id", world_frame_id, std::string("world"));
     ROS_INFO("map size: %f, %f, %f", map_size(0), map_size(1), map_size(2));
     dim_(0) = map_size(0) / res_;
     dim_(1) = map_size(1) / res_;

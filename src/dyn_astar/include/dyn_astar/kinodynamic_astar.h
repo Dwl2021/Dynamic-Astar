@@ -43,7 +43,7 @@ class PathNode
     parent = NULL;
     node_state = NOT_EXPAND;
   }
-  ~PathNode(){};
+  ~PathNode() {};
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 typedef PathNode* PathNodePtr;
@@ -122,7 +122,7 @@ class KinodynamicAstar
   std::vector<PathNodePtr> path_nodes_;
 
   /* ---------- record data ---------- */
-  Eigen::Vector3d start_vel_, end_vel_, start_acc_;
+  Eigen::Vector3d start_vel_, end_vel_, end_acc_, start_acc_;
   Eigen::Matrix<double, 6, 6> phi_;  // state transit matrix
   // shared_ptr<SDFMap> sdf_map;
   std::shared_ptr<MapUtil<3>> map_util_;
@@ -135,9 +135,10 @@ class KinodynamicAstar
   /* search */
   double max_tau_, init_max_tau_;
   double max_vel_, max_acc_;
-  double w_time_, horizon_, lambda_heu_;
+  double rho_, horizon_, lambda_heu_;
   int allocate_num_, check_num_;
   double tie_breaker_;
+  double tolerance_;
   bool optimistic_;
 
   /* map */
@@ -154,15 +155,17 @@ class KinodynamicAstar
   std::vector<double> cubic(double a, double b, double c, double d);
   std::vector<double> quartic(double a, double b, double c, double d, double e);
   bool computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2,
-                       double time_to_goal);
-  double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
-
+                       Eigen::Vector3d acc0, Eigen::Vector3d acc1, double time_to_goal);
+  double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, Eigen::Vector3d acc0,
+                           Eigen::Vector3d acc1, double& optimal_time);
+  double bvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
+                 const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T);
   /* state propagation */
   void stateTransit(Eigen::Matrix<double, 6, 1>& state0,
                     Eigen::Matrix<double, 6, 1>& state1, Eigen::Vector3d um, double tau);
 
  public:
-  KinodynamicAstar(){};
+  KinodynamicAstar() {};
   ~KinodynamicAstar();
 
   enum
@@ -179,7 +182,8 @@ class KinodynamicAstar
   void reset();
   int search(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
              Eigen::Vector3d start_acc, Eigen::Vector3d end_pt, Eigen::Vector3d end_vel,
-             bool init, bool dynamic = false, double time_start = -1.0);
+             Eigen::Vector3d end_acc, bool init, bool dynamic = false,
+             double time_start = -1.0);
 
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
 
@@ -187,9 +191,6 @@ class KinodynamicAstar
 
   // convert from std::vector<Eigen::Vector3d> to vec_Vec3f
   static void convert_path(const std::vector<Eigen::Vector3d>& path, vec_Vec3f& result);
-
-  void getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
-                  std::vector<Eigen::Vector3d>& start_end_derivatives);
 
   std::vector<PathNodePtr> getVisitedNodes();
 
