@@ -26,6 +26,7 @@
 #include <sstream>
 
 using namespace Eigen;
+bool debug = true;
 
 KinodynamicAstar::~KinodynamicAstar()
 {
@@ -150,7 +151,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     open_set_.pop();
     cur_node->node_state = IN_CLOSE_SET;
     iter_num_ += 1;
-    // ROS_INFO("iter num: %d", iter_num_);
+    ROS_INFO("iter num: %d", iter_num_);
 
     double res = 1 / 3.0, time_res = 1 / 1.0, time_res_init = 1 / 20.0;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
@@ -201,7 +202,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
                                        : expanded_nodes_.find(pro_id);
         if (pro_node != NULL && pro_node->node_state == IN_CLOSE_SET)
         {
-          if (init_search) std::cout << "close" << std::endl;
+          if (debug) std::cout << "close" << std::endl;
           continue;
         }
 
@@ -210,7 +211,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (fabs(pro_v(0)) > max_vel_ || fabs(pro_v(1)) > max_vel_ ||
             fabs(pro_v(2)) > max_vel_)
         {
-          if (init_search) std::cout << "vel" << std::endl;
+          if (debug) std::cout << "vel" << std::endl;
           continue;
         }
 
@@ -219,7 +220,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (fabs(pro_a(0)) > max_acc_ || fabs(pro_a(1)) > max_acc_ ||
             fabs(pro_a(2)) > max_acc_)
         {
-          if (init_search) std::cout << "acc" << std::endl;
+          if (debug) std::cout << "acc" << std::endl;
           continue;
         }
 
@@ -228,7 +229,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         int diff_time = pro_t_id - cur_node->time_idx;
         if (diff.norm() == 0 && ((!dynamic) || diff_time == 0))
         {
-          if (init_search) std::cout << "same" << std::endl;
+          if (debug) std::cout << "same" << std::endl;
           continue;
         }
 
@@ -249,7 +250,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         }
         if (is_occ)
         {
-          if (init_search) std::cout << "occ" << std::endl;
+          if (debug) std::cout << "occ" << std::endl;
           continue;
         }
         double time_to_goal, tmp_g_score, tmp_f_score;
