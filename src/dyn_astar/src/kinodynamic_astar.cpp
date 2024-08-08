@@ -408,7 +408,6 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
     if (T > 4 * saw_T)
     {
       suitable_shot = false;
-      cost = inf;
       return cost;
     }
     cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
