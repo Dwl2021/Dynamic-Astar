@@ -62,9 +62,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   end_state.segment(3, 3) = end_v;
   end_state.tail(3) = end_a;
   end_index = posToIndex(end_pt);
-  bool suit = false;
   cur_node->f_score =
-      lambda_heu_ * estimateHeuristic(cur_node->state, end_state, optimal_time, suit);
+      lambda_heu_ * estimateHeuristic(cur_node->state, end_state, optimal_time);
   ROS_INFO("heuristic: %f", cur_node->f_score);
 
   cur_node->node_state = IN_OPEN_SET;
@@ -100,18 +99,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     {
       ROS_INFO("NEAR END");
       // Check whether shot traj exist
-      bool suitable_shot = false;
-      estimateHeuristic(cur_node->state, end_state, optimal_time, suitable_shot);
-      if (suitable_shot) computeShotTraj(cur_node->state, end_state, optimal_time);
-      if (suitable_shot && !is_shot_succ_)
-      {
-        ROS_INFO("Current pos: %f, %f, %f", cur_node->state(0), cur_node->state(1),
-                 cur_node->state(2));
-        ROS_INFO("Current vel: %f, %f, %f", cur_node->state(3), cur_node->state(4),
-                 cur_node->state(5));
-        ROS_INFO("Shot traj not exist!");
-      }
-
+      estimateTime(cur_node->state, end_state, optimal_time);
+      computeShotTraj(cur_node->state, end_state, optimal_time);
       if (is_shot_succ_)
       {
         terminate_node = cur_node;
@@ -121,6 +110,14 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         std::cout << "end state : " << end_state.head(3).transpose() << std::endl;
         std::cout << "reach end" << std::endl;
         return REACH_END;
+      }
+      else
+      {
+        ROS_INFO("Current pos: %f, %f, %f", cur_node->state(0), cur_node->state(1),
+                 cur_node->state(2));
+        ROS_INFO("Current vel: %f, %f, %f", cur_node->state(3), cur_node->state(4),
+                 cur_node->state(5));
+        ROS_INFO("Shot traj not exist!");
       }
     }
 
@@ -205,8 +202,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         Eigen::Vector3d diff_vel = pro_vel - cur_node->state.segment(3, 3);
         Eigen::Vector3d diff_acc = pro_acc - cur_node->state.tail(3);
 
-        if (diff.norm() == 0 && diff_vel.norm() < 0.2 && diff_acc.norm() < 0.2 &&
-            ((!dynamic) || diff_time == 0))
+        if (diff.norm() == 0 && diff_vel.norm() < 0.2 && ((!dynamic) || diff_time == 0))
         {
           if (debug) std::cout << "same" << std::endl;
           continue;
@@ -230,13 +226,13 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (is_occ)
         {
           if (debug) std::cout << "occ" << std::endl;
+          // ROS_INFO("occupied spos: %f, %f, %f", pos(0), pos(1), pos(2));
           continue;
         }
         double time_to_goal, tmp_g_score, tmp_f_score;
-        bool suit;
         tmp_g_score = (um.squaredNorm() + rho_) * tau + cur_node->g_score;
-        tmp_f_score = tmp_g_score + lambda_heu_ * estimateHeuristic(pro_state, end_state,
-                                                                    time_to_goal, suit);
+        tmp_f_score = tmp_g_score +
+                      lambda_heu_ * estimateHeuristic(pro_state, end_state, time_to_goal);
 
         // Compare nodes expanded from the same parent
         bool prune = false;
@@ -249,8 +245,8 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
               pro_state.segment(3, 3) - expand_node->state.segment(3, 3);
           Eigen::Vector3d acc_diff = pro_state.tail(3) - expand_node->state.tail(3);
 
-          if ((pro_id - expand_node->index).norm() == 0 && vel_diff.norm() < 0.5 &&
-              acc_diff.norm() < 0.5 && ((!dynamic) || pro_t_id == expand_node->time_idx))
+          if ((pro_id - expand_node->index).norm() == 0 && vel_diff.norm() < 0.2 &&
+              ((!dynamic) || pro_t_id == expand_node->time_idx))
           {
             prune = true;
             if (tmp_f_score < expand_node->f_score)
@@ -371,7 +367,36 @@ void KinodynamicAstar::retrievePath(PathNodePtr end_node)
 }
 
 double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2,
-                                           double& optimal_time, bool& suitable_shot)
+                                           double& optimal_time)
+{
+  const Vector3d p_o = x1.head(3);
+  const Vector3d v_o = x1.segment(3, 3);
+  const Vector3d a_o = x1.segment(6, 3);
+  const Vector3d p_f = x2.head(3);
+  const Vector3d v_f = x2.segment(3, 3);
+  const Vector3d a_f = x2.segment(6, 3);
+
+  double T = (x2.head(3) - x1.head(3)).norm() / max_vel_;
+  double saw_T = T;
+  double max_omega;
+  double cost = inf;
+  double T_step = 0.3;
+  double min_cost = inf;
+  do
+  {
+    T += T_step;
+    cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
+    if (cost < min_cost)
+    {
+      min_cost = cost;
+      optimal_time = T;
+    }
+  } while (T < 3 * saw_T);
+  return cost;
+}
+
+double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
+                                      double& optimal_time)
 {
   const Vector3d p_o = x1.head(3);
   const Vector3d v_o = x1.segment(3, 3);
@@ -388,15 +413,9 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   do
   {
     T += T_step;
-    // if (T > 10 * saw_T)
-    // {
-    //   suitable_shot = false;
-    //   return cost;
-    // }
     cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
   } while (max_omega > 1.5 * max_omega_);
   optimal_time = T;
-  suitable_shot = true;
   return cost;
 }
 

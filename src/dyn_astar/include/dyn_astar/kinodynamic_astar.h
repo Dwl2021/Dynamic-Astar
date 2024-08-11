@@ -96,9 +96,7 @@ class NodeHashTable
   PathNodePtr find(Eigen::Vector3i idx, Eigen::Vector3d vel, Eigen::Vector3d acc)
   {
     auto iter = data_3d_.find(idx);
-    if (iter != data_3d_.end() &&
-        (iter->second->state.segment(3, 3) - vel).norm() < 0.5 &&
-        (iter->second->state.segment(6, 3) - acc).norm() < 0.5)
+    if (iter != data_3d_.end() && (iter->second->state.segment(3, 3) - vel).norm() < 0.2)
     {
       return iter->second;
     }
@@ -162,8 +160,8 @@ class KinodynamicAstar
   std::vector<double> cubic(double a, double b, double c, double d);
   std::vector<double> quartic(double a, double b, double c, double d, double e);
   bool computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2, double time);
-  double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time,
-                           bool& suit);
+  double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
+  double estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
 
   double bvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
                  const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T,
