@@ -93,11 +93,18 @@ class NodeHashTable
         std::make_pair(Eigen::Vector4i(idx(0), idx(1), idx(2), time_idx), node));
   }
 
-  PathNodePtr find(Eigen::Vector3i idx)
+  PathNodePtr find(Eigen::Vector3i idx, Eigen::Vector3d vel, Eigen::Vector3d acc)
   {
     auto iter = data_3d_.find(idx);
-    return iter == data_3d_.end() ? NULL : iter->second;
+    if (iter != data_3d_.end() &&
+        (iter->second->state.segment(3, 3) - vel).norm() < 0.5 &&
+        (iter->second->state.segment(6, 3) - acc).norm() < 0.5)
+    {
+      return iter->second;
+    }
+    return NULL;
   }
+
   PathNodePtr find(Eigen::Vector3i idx, int time_idx)
   {
     auto iter = data_4d_.find(Eigen::Vector4i(idx(0), idx(1), idx(2), time_idx));
