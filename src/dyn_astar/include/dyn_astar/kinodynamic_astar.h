@@ -96,7 +96,8 @@ class NodeHashTable
   PathNodePtr find(Eigen::Vector3i idx, Eigen::Vector3d vel, Eigen::Vector3d acc)
   {
     auto iter = data_3d_.find(idx);
-    if (iter != data_3d_.end() && (iter->second->state.segment(3, 3) - vel).norm() < 0.2)
+    if (iter != data_3d_.end() &&
+        (iter->second->state.segment(3, 3) - vel).norm() == 1e-6)
     {
       return iter->second;
     }
@@ -190,8 +191,7 @@ class KinodynamicAstar
 
   int search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v, Eigen::Vector3d start_a,
              Eigen::Vector3d start_j, Eigen::Vector3d end_pt, Eigen::Vector3d end_v,
-             Eigen::Vector3d end_a, bool init = false, bool dynamic = false,
-             double time_start = -1.0);
+             Eigen::Vector3d end_a, bool dynamic = false, double time_start = -1.0);
 
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
   bool hasMap();

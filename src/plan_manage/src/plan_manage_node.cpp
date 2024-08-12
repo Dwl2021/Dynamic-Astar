@@ -61,6 +61,7 @@ int main(int argc, char** argv)
     /* Plan once */
     if (map_util->has_map_() && !plan_once)
     {
+      plan_once = true;
       success =
           kastar.search(start, start_vel, start_acc, start_jer, goal, goal_vel, goal_acc);
       ROS_INFO(success == 2 ? "\033[1;32mPATH FOUND!\033[0m"
@@ -75,7 +76,6 @@ int main(int argc, char** argv)
 
         /* visualize */
         visualizer.visualizePath(path_optional);
-        plan_once = true;
       }
     }
     rate.sleep();
