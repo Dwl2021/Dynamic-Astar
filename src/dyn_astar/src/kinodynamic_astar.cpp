@@ -26,7 +26,7 @@
 #include <sstream>
 
 using namespace Eigen;
-bool debug = false;
+bool _debug = false;
 
 KinodynamicAstar::~KinodynamicAstar()
 {
@@ -177,7 +177,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
                                        : expanded_nodes_.find(pro_id, pro_vel, pro_acc);
         if (pro_node != NULL && pro_node->node_state == IN_CLOSE_SET)
         {
-          if (debug) std::cout << "close" << std::endl;
+          if (_debug) std::cout << "close" << std::endl;
           continue;
         }
 
@@ -186,7 +186,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (fabs(pro_v(0)) > max_vel_ || fabs(pro_v(1)) > max_vel_ ||
             fabs(pro_v(2)) > max_vel_)
         {
-          if (debug) std::cout << "vel" << std::endl;
+          if (_debug) std::cout << "vel" << std::endl;
           continue;
         }
 
@@ -195,7 +195,14 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (fabs(pro_a(0)) > max_acc_ || fabs(pro_a(1)) > max_acc_ ||
             fabs(pro_a(2)) > max_acc_)
         {
-          if (debug) std::cout << "acc" << std::endl;
+          if (_debug) std::cout << "acc" << std::endl;
+          continue;
+        }
+
+        if ((pro_pos(2) < start_pt(2) && pro_pos(2) < end_pt(2)) ||
+            (pro_pos(2) > start_pt(2) && pro_pos(2) > end_pt(2)))
+        {
+          if (_debug) std::cout << "z exceed" << std::endl;
           continue;
         }
 
@@ -207,7 +214,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
 
         if (diff.norm() == 0 && diff_vel.norm() < 1e-6 && ((!dynamic) || diff_time == 0))
         {
-          if (debug) std::cout << "same" << std::endl;
+          if (_debug) std::cout << "same" << std::endl;
           continue;
         }
 
@@ -223,7 +230,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           check_pos = xt.head(3);
           if (map_util_->isOccupied(check_pos) == true)
           {
-            if (debug)
+            if (_debug)
             {
               ROS_INFO("extend fail, occupied pos = %f, %f, %f", check_pos(0),
                        check_pos(1), check_pos(2));
@@ -574,13 +581,15 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
         pos(1) < origin_(1) || pos(1) >= origin_(1) + map_size_3d_(1) ||
         pos(2) < origin_(2) || pos(2) >= origin_(2) + map_size_3d_(2))
     {
-      ROS_INFO("shot fail, out of map, pos = %f, %f, %f", pos(0), pos(1), pos(2));
+      if (_debug)
+        ROS_INFO("shot fail, out of map, pos = %f, %f, %f", pos(0), pos(1), pos(2));
       return false;
     }
 
     if (map_util_->isOccupied(pos) == true)
     {
-      ROS_INFO("shot fail, occupied pos = %f, %f, %f", pos(0), pos(1), pos(2));
+      if (_debug)
+        ROS_INFO("shot fail, occupied pos = %f, %f, %f", pos(0), pos(1), pos(2));
       return false;
     }
 
@@ -795,6 +804,77 @@ double KinodynamicAstar::getKinoTraj(double delta_t, std::vector<Eigen::Vector3d
   path = state_list;
 
   return total_time;
+}
+
+void KinodynamicAstar::getKinoTraj(double delta_t, vec_Vec3f& path)
+{
+  std::vector<Vector3d> state_list;
+  path.clear();
+
+  /* ---------- get traj of searching ---------- */
+  PathNodePtr node = path_nodes_.back();
+  Matrix<double, 9, 1> x0, xt;
+
+  while (node->parent != NULL)
+  {
+    Vector3d ut = node->input;
+    double duration = node->duration;
+    x0 = node->parent->state;
+
+    for (double t = duration; t >= -1e-5; t -= delta_t)
+    {
+      stateTransit(x0, xt, ut, t);
+      state_list.push_back(xt.head(3));
+    }
+    node = node->parent;
+  }
+  reverse(state_list.begin(), state_list.end());
+  /* ---------- get traj of one shot ---------- */
+  if (is_shot_succ_)
+  {
+    Vector3d pos, vel, acc, jer;
+    Matrix<double, 6, 1> beta0, beta1, beta2, beta3;
+    double s1, s2, s3, s4, s5;
+
+    for (double t = delta_t; t <= t_shot_; t += delta_t)
+    {
+      s1 = t;
+      s2 = s1 * s1;
+      s3 = s2 * s1;
+      s4 = s2 * s2;
+      s5 = s2 * s3;
+      beta0 << 1, s1, s2, s3, s4, s5;
+      beta1 << 0, 1, 2 * s1, 3 * s2, 4 * s3, 5 * s4;
+      beta2 << 0, 0, 2, 6 * s1, 12 * s2, 20 * s3;
+      beta3 << 0, 0, 0, 6, 24 * s1, 60 * s2;
+      pos = coef_shot_ * beta0;
+      vel = coef_shot_ * beta1;
+      acc = coef_shot_ * beta2;
+      jer = coef_shot_ * beta3;
+
+      ROS_INFO("pos: %f, %f, %f", pos(0), pos(1), pos(2));
+      ROS_INFO("vel: %f, %f, %f", vel(0), vel(1), vel(2));
+      ROS_INFO("acc: %f, %f, %f", acc(0), acc(1), acc(2));
+      ROS_INFO("jer: %f, %f, %f", jer(0), jer(1), jer(2));
+      ROS_INFO("---------------------------------------------");
+      state_list.push_back(pos);
+    }
+  }
+  else
+  {
+    std::cout << "no shot traj" << std::endl;
+  }
+
+  Vec3f tmp_path;
+  for (auto tmp_state : state_list)
+  {
+    tmp_path(0) = tmp_state(0);
+    tmp_path(1) = tmp_state(1);
+    tmp_path(2) = tmp_state(2);
+    path.push_back(tmp_path);
+  }
+
+  return;
 }
 std::vector<PathNodePtr> KinodynamicAstar::getVisitedNodes()
 {
