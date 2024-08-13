@@ -63,6 +63,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   end_index = posToIndex(end_pt);
   cur_node->f_score =
       lambda_heu_ * estimateHeuristic(cur_node->state, end_state, optimal_time);
+
   ROS_INFO("heuristic: %f", cur_node->f_score);
 
   cur_node->node_state = IN_OPEN_SET;
@@ -138,9 +139,9 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     std::vector<Eigen::Vector3d> inputs;
     std::vector<double> durations;
     Eigen::Vector3d cur_pos = cur_state.head(3);
-    ROS_INFO("transver points: %f, %f, %f", cur_pos(0), cur_pos(1), cur_pos(2));
+    ROS_INFO("traverse points: %f, %f, %f", cur_pos(0), cur_pos(1), cur_pos(2));
     Eigen::Vector3d cur_vel = cur_state.segment(3, 3);
-    // ROS_INFO("transver vel: %f, %f, %f", cur_vel(0), cur_vel(1), cur_vel(2));
+    // ROS_INFO("traverse vel: %f, %f, %f", cur_vel(0), cur_vel(1), cur_vel(2));
 
     for (double jerk_x = -max_jer_; jerk_x <= max_jer_ + 1e-3; jerk_x += max_jer_ * res)
       for (double jerk_y = -max_jer_; jerk_y <= max_jer_ + 1e-3; jerk_y += max_jer_ * res)
@@ -212,7 +213,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         Eigen::Vector3d diff_vel = pro_vel - cur_node->state.segment(3, 3);
         Eigen::Vector3d diff_acc = pro_acc - cur_node->state.tail(3);
 
-        if (diff.norm() == 0 && diff_vel.norm() < 1e-6 && ((!dynamic) || diff_time == 0))
+        if (diff.norm() == 0 && diff_vel.norm() < 1e-1 && ((!dynamic) || diff_time == 0))
         {
           if (_debug) std::cout << "same" << std::endl;
           continue;
@@ -392,25 +393,113 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   const Vector3d v_f = x2.segment(3, 3);
   const Vector3d a_f = x2.segment(6, 3);
 
-  double T = (x2.head(3) - x1.head(3)).norm() / max_vel_;
+  double T = (p_f - p_o).norm() / max_vel_;
+
   double saw_T = T;
   double max_omega;
-  double cost = inf;
-  double T_step = 0.3;
-  double min_cost = inf;
+  double cost = 0;
+  double T_step = 0.2;
+  double min_cost = 100000000;
   do
   {
     T += T_step;
     cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
+    // ROS_INFO("T = %f, cost = %f", T, cost);
     if (cost < min_cost)
     {
       min_cost = cost;
       optimal_time = T;
     }
-  } while (T < 3 * saw_T);
-  // cost = (p_f - p_o).norm();
+  } while (T < 5 * saw_T);
+  // cost = (p_f - p_o).squaredNorm();
+  cost = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, optimal_time);
 
-  return min_cost;
+  // ROS_INFO("optimal time = %f, heuristic = %f", optimal_time, cost);
+  return 1.0 * (1 + tie_breaker_) * cost;
+}
+
+// double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2,
+//                                            double& optimal_time)
+// {
+//   const Vector3d p_o = x1.head(3);
+//   const Vector3d v_o = x1.segment(3, 3);
+//   const Vector3d a_o = x1.segment(6, 3);
+//   const Vector3d p_f = x2.head(3);
+//   const Vector3d v_f = x2.segment(3, 3);
+//   const Vector3d a_f = x2.segment(6, 3);
+
+//   double c4 = (-18 * a_o.dot(a_o) + 12 * a_o.dot(a_f) - 18 * a_f.dot(a_f));
+//   double c3 =
+//       (144 * a_f.dot(v_o) - 144 * a_o.dot(v_f) - 216 * a_o.dot(v_o) + 216 *
+//       a_f.dot(v_f));
+//   double c2 =
+//       (-768 * v_o.dot(v_o) - 1344 * v_o.dot(v_f) - 768 * v_f.dot(v_f) -
+//        480 * a_o.dot(p_o) + 480 * a_o.dot(p_f) + 480 * a_f.dot(p_o) - 480 *
+//        a_f.dot(p_f));
+//   double c1 = (3600 * p_f.dot(v_o) - 3600 * p_o.dot(v_f) - 3600 * p_o.dot(v_o) +
+//                3600 * p_f.dot(v_f));
+//   double c0 = (-4320 * p_o.dot(p_o) + 8640 * p_o.dot(p_f) - 4320 * p_f.dot(p_f));
+
+//   std::vector<double> ts = quartic(c4, c3, c2, c1, c0);
+
+//   double v_max = max_vel_ * 0.5;
+//   double t_bar = (p_o - p_f).lpNorm<Infinity>() / v_max;
+//   ts.push_back(t_bar);
+
+//   double cost = 100000000;
+//   double t_d = t_bar;
+
+//   for (auto t : ts)
+//   {
+//     if (t < t_bar) continue;
+//     double c = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
+//     if (c < cost)
+//     {
+//       cost = c;
+//       t_d = t;
+//     }
+//   }
+//   optimal_time = t_d;
+//   return 1.0 * (1 + tie_breaker_) * cost;
+// }
+
+double KinodynamicAstar::obvpCost(const Vector3d& p_o, const Vector3d& v_o,
+                                  const Vector3d& a_o, const Vector3d& p_f,
+                                  const Vector3d& v_f, const Vector3d& a_f, double T)
+{
+  double T2 = T * T;
+  double T3 = T2 * T;
+  double T4 = T3 * T;
+  double T6 = T3 * T3;
+
+  double term1 = 3 * T4 * a_o.dot(a_o);
+  double term2 = -2 * T4 * a_o.dot(a_f);
+  double term3 = 3 * T4 * a_f.dot(a_f);
+  double term4 = 24 * T3 * a_o.dot(v_o);
+  double term5 = 16 * T3 * a_o.dot(v_f);
+  double term6 = -16 * T3 * a_f.dot(v_o);
+  double term7 = -24 * T3 * a_f.dot(v_f);
+  double term8 = 40 * T2 * a_o.dot(p_o);
+  double term9 = -40 * T2 * a_o.dot(p_f);
+  double term10 = -40 * T2 * a_f.dot(p_o);
+  double term11 = 40 * T2 * a_f.dot(p_f);
+  double term12 = 64 * T2 * v_o.dot(v_o);
+  double term13 = 112 * T2 * v_o.dot(v_f);
+  double term14 = 64 * T2 * v_f.dot(v_f);
+  double term15 = 240 * T * p_o.dot(v_o);
+  double term16 = 240 * T * p_o.dot(v_f);
+  double term17 = -240 * T * p_f.dot(v_o);
+  double term18 = -240 * T * p_f.dot(v_f);
+  double term19 = 240 * p_o.dot(p_o);
+  double term20 = -480 * p_o.dot(p_f);
+  double term21 = 240 * p_f.dot(p_f);
+
+  double numerator = 3 * (term1 + term2 + term3 + term4 + term5 + term6 + term7 + term8 +
+                          term9 + term10 + term11 + term12 + term13 + term14 + term15 +
+                          term16 + term17 + term18 + term19 + term20 + term21);
+  double denominator = T6;
+
+  return numerator / denominator;
 }
 
 double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
@@ -426,7 +515,7 @@ double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
   double T = (x2.head(3) - x1.head(3)).norm() / max_vel_;
   double saw_T = T;
   double max_omega;
-  double cost = inf;
+  double cost = 0;
   double T_step = 0.3;
   do
   {
@@ -481,7 +570,7 @@ double KinodynamicAstar::bvpCost(const Vector3d& p_o, const Vector3d& v_o,
   max_omega = 0;
   double total_cost = 0;
   /* ---------- forward checking of trajectory ---------- */
-  double t_delta = 0.02;
+  double t_delta = 0.01;
   for (double time = t_delta; time <= t_d; time += t_delta)
   {
     s1 = time;
@@ -509,6 +598,7 @@ double KinodynamicAstar::bvpCost(const Vector3d& p_o, const Vector3d& v_o,
     last_pos = pos;
   }
   // total_cost += rho_ * T;
+  total_cost /= T;
   return total_cost;
 }
 

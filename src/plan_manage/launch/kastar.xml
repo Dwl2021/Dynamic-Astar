@@ -1,5 +1,5 @@
 <launch>
-  <arg name="resolution" default="0.2" />
+  <arg name="resolution" default="0.3" />
 
   <param name="map/x_size" value="12" />
   <param name="map/y_size" value="8" />
@@ -24,7 +24,7 @@
   <param name="search/time_resolution" value="0.8" type="double" />
   <param name="search/vel_margin" value="1" type="double" />
   <param name="search/acc_margin" value="2" type="double" />
-  <param name="search/allocate_num" value="1000000" type="int" />
+  <param name="search/allocate_num" value="2000000" type="int" />
   <param name="search/check_num" value="5" type="int" />
   <param name="search/tolerance" value="3" type="double" />
 </launch>

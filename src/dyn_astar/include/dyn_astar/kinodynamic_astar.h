@@ -96,8 +96,7 @@ class NodeHashTable
   PathNodePtr find(Eigen::Vector3i idx, Eigen::Vector3d vel, Eigen::Vector3d acc)
   {
     auto iter = data_3d_.find(idx);
-    if (iter != data_3d_.end() &&
-        (iter->second->state.segment(3, 3) - vel).norm() == 1e-6)
+    if (iter != data_3d_.end() && (iter->second->state.segment(3, 3) - vel).norm() < 1e-1)
     {
       return iter->second;
     }
@@ -167,6 +166,9 @@ class KinodynamicAstar
   double bvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
                  const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T,
                  double& max_omega);
+  double obvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
+                  const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f,
+                  double T);
   /* state propagation */
   void stateTransit(Eigen::Matrix<double, 9, 1>& state0,
                     Eigen::Matrix<double, 9, 1>& state1, Eigen::Vector3d um, double tau);
