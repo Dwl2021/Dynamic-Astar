@@ -92,15 +92,16 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
 
     // Terminate?
     bool reach_horizon = (cur_node->state.head(3) - start_pt).norm() >= horizon_;
-    bool near_end = abs(cur_node->index(0) - end_index(0)) <= tolerance &&
-                    abs(cur_node->index(1) - end_index(1)) <= tolerance &&
-                    abs(cur_node->index(2) - end_index(2)) <= tolerance;
+    // bool near_end = abs(cur_node->index(0) - end_index(0)) <= tolerance &&
+    //                 abs(cur_node->index(1) - end_index(1)) <= tolerance &&
+    //                 abs(cur_node->index(2) - end_index(2)) <= tolerance;
+    bool near_end = (cur_node->state.head(3) - end_pt).norm() <= tolerance_;
 
     if (near_end)
     {
       ROS_INFO("NEAR END");
       // Check whether shot traj exist
-      estimateTime(cur_node->state, end_state, optimal_time);
+      estimateHeuristic(cur_node->state, end_state, optimal_time);
       computeShotTraj(cur_node->state, end_state, optimal_time);
       if (is_shot_succ_)
       {
@@ -128,7 +129,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     ROS_INFO("iter num: %d", iter_num_);
     ROS_INFO("heuristic: %f", cur_node->f_score - cur_node->g_score);
 
-    double res = 1 / 5.0, time_res = 1 / 1.0;
+    double res = 1 / 3.0, time_res = 1 / 1.0;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
     Eigen::Matrix<double, 9, 1> pro_state;
     std::vector<PathNodePtr> tmp_expand_nodes;
@@ -447,7 +448,7 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   for (auto t : ts)
   {
     if (t < t_bar) continue;
-    double c = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t, max_omega);
+    double c = jerkCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
     if (c < cost)
     {
       cost = c;
@@ -511,7 +512,7 @@ double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
   double saw_T = T;
   double max_omega;
   double cost = 0;
-  double T_step = 0.3;
+  double T_step = 0.1;
   do
   {
     T += T_step;
@@ -519,6 +520,59 @@ double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
   } while (max_omega > 1.5 * max_omega_);
   optimal_time = T;
   return cost;
+}
+
+double KinodynamicAstar::jerkCost(const Vector3d& p_o, const Vector3d& v_o,
+                                  const Vector3d& a_o, const Vector3d& p_f,
+                                  const Vector3d& v_f, const Vector3d& a_f, double T)
+{
+  /* ---------- get coefficient ---------- */
+  const Vector3d p0 = p_o;
+  const Vector3d v0 = v_o;
+  const Vector3d a0 = a_o;
+  const Vector3d p1 = p_f;
+  const Vector3d v1 = v_f;
+  const Vector3d a1 = a_f;
+  double t_d = T;
+  MatrixXd coef(3, 6);
+
+  /*
+  p = c0 + c1t + c2t^2 + c3t^3 + c4t^4 + c5t^5
+  */
+  Vector3d c5 = -(12 * p0 - 12 * p1 + 6 * t_d * v1 + 6 * t_d * v0 - t_d * t_d * a1 +
+                  t_d * t_d * a0) /
+                (2 * pow(t_d, 5));
+  Vector3d c4 = (30 * p0 - 30 * p1 + 14 * t_d * v1 + 16 * t_d * v0 - 2 * t_d * t_d * a1 +
+                 3 * t_d * t_d * a0) /
+                (2 * pow(t_d, 4));
+  Vector3d c3 = -(20 * p0 - 20 * p1 + 8 * t_d * v1 + 12 * t_d * v0 - t_d * t_d * a1 +
+                  3 * t_d * t_d * a0) /
+                (2 * pow(t_d, 3));
+  Vector3d c2 = a0 / 2.0;
+  Vector3d c1 = v0;
+  Vector3d c0 = p0;
+
+  // Fill the coefficients matrix
+  coef.col(5) = c5;
+  coef.col(4) = c4;
+  coef.col(3) = c3;
+  coef.col(2) = c2;
+  coef.col(1) = c1;
+  coef.col(0) = c0;
+
+  // Calculate the jerk cost
+  double objective = 0.0;
+  for (int i = 0; i < 3; i++)
+  {  // For each dimension (x, y, z)
+    objective += 36.0 * pow(coef(i, 3), 2) * T +
+                 144.0 * coef(i, 4) * coef(i, 3) * pow(T, 2) +
+                 192.0 * pow(coef(i, 4), 2) * pow(T, 3) +
+                 240.0 * coef(i, 5) * coef(i, 3) * pow(T, 3) +
+                 720.0 * coef(i, 5) * coef(i, 4) * pow(T, 4) +
+                 720.0 * pow(coef(i, 5), 2) * pow(T, 5);
+  }
+
+  return objective;
 }
 
 double KinodynamicAstar::bvpCost(const Vector3d& p_o, const Vector3d& v_o,
@@ -592,8 +646,7 @@ double KinodynamicAstar::bvpCost(const Vector3d& p_o, const Vector3d& v_o,
     // total_cost += (pos - last_pos).norm();
     last_pos = pos;
   }
-  // total_cost += rho_ * T;
-  total_cost /= T;
+  total_cost += rho_ * T;
   return total_cost;
 }
 
@@ -677,12 +730,6 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
         ROS_INFO("shot fail, occupied pos = %f, %f, %f", pos(0), pos(1), pos(2));
       return false;
     }
-
-    // if ((pos - end_pos_).norm() < 1 && vel.norm() < 0.1)
-    // {
-    //   std::cout << "11111111111" << std::endl;
-    //   return false;
-    // }
   }
   coef_shot_ = coef;
   t_shot_ = t_d;
@@ -976,8 +1023,8 @@ Eigen::Vector3i KinodynamicAstar::posToIndex(Eigen::Vector3d pt)
 
 Eigen::Vector3d KinodynamicAstar::discretizeVel(const Eigen::Vector3d& vel)
 {
-  const int NUM_DIRECTIONS = 24;
-  const int NUM_LEVELS = 10;
+  const int NUM_DIRECTIONS = 48;
+  const int NUM_LEVELS = 20;
 
   // Calculate angle and magnitude
   double angle = std::atan2(vel.y(), vel.x());

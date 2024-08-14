@@ -11,10 +11,10 @@
   <param name="map/world_frame_id" value="world" />
 
   <!-- kinodynamic path searching -->
-  <param name="search/max_tau" value="0.3" type="double" />
-  <param name="search/max_vel" value="8" type="double" />
-  <param name="search/max_acc" value="7" type="double" />
-  <param name="search/max_jer" value="10" type="double" />
+  <param name="search/max_tau" value="0.4" type="double" />
+  <param name="search/max_vel" value="6" type="double" />
+  <param name="search/max_acc" value="6" type="double" />
+  <param name="search/max_jer" value="2" type="double" />
   <param name="search/max_omega" value="3" type="double" />
   <param name="search/rho" value="10.0" type="double" />
   <param name="search/horizon" value="1000000" type="double" />
@@ -22,9 +22,9 @@
   <param name="search/resolution_astar" value="$(arg resolution)" type="double" />
   <param name="search/resolution_astar" value="$(arg resolution)" type="double" />
   <param name="search/time_resolution" value="0.8" type="double" />
-  <param name="search/vel_margin" value="1" type="double" />
-  <param name="search/acc_margin" value="2" type="double" />
+  <param name="search/vel_margin" value="0" type="double" />
+  <param name="search/acc_margin" value="0" type="double" />
   <param name="search/allocate_num" value="2000000" type="int" />
   <param name="search/check_num" value="5" type="int" />
-  <param name="search/tolerance" value="2" type="double" />
+  <param name="search/tolerance" value="3" type="double" />
 </launch>
