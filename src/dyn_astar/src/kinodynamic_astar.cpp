@@ -125,10 +125,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     cur_node->node_state = IN_CLOSE_SET;
     iter_num_ += 1;
     ROS_INFO("iter num: %d", iter_num_);
-    // if (iter_num_ == 2)
-    // {
-    //   assert(0);
-    // }
 
     double res = 1 / 3.0, time_res = 1 / 1.0;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
@@ -404,7 +400,6 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   {
     T += T_step;
     cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
-    // ROS_INFO("T = %f, cost = %f", T, cost);
     if (cost < min_cost)
     {
       min_cost = cost;
@@ -412,10 +407,10 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
     }
   } while (T < 5 * saw_T);
   // cost = (p_f - p_o).squaredNorm();
-  cost = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, optimal_time);
+  // cost = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, optimal_time);
 
   // ROS_INFO("optimal time = %f, heuristic = %f", optimal_time, cost);
-  return 1.0 * (1 + tie_breaker_) * cost;
+  return 1.0 * (1 + tie_breaker_) * min_cost;
 }
 
 // double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2,
