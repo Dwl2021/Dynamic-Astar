@@ -125,8 +125,9 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     cur_node->node_state = IN_CLOSE_SET;
     iter_num_ += 1;
     ROS_INFO("iter num: %d", iter_num_);
+    ROS_INFO("heuristic: %f", cur_node->f_score - cur_node->g_score);
 
-    double res = 1 / 3.0, time_res = 1 / 1.0;
+    double res = 1 / 5.0, time_res = 1 / 1.0;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
     Eigen::Matrix<double, 9, 1> pro_state;
     std::vector<PathNodePtr> tmp_expand_nodes;
@@ -142,7 +143,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     for (double jerk_x = -max_jer_; jerk_x <= max_jer_ + 1e-3; jerk_x += max_jer_ * res)
       for (double jerk_y = -max_jer_; jerk_y <= max_jer_ + 1e-3; jerk_y += max_jer_ * res)
       // for (double jerk_z = -max_jer_; jerk_z <= max_jer_ + 1e-3;
-      //  jerk_z += max_jer_ * res)
+      //      jerk_z += max_jer_ * res)
       {
         um << jerk_x, jerk_y, 0;
         inputs.push_back(um);
@@ -196,12 +197,12 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           continue;
         }
 
-        if ((pro_pos(2) < start_pt(2) && pro_pos(2) < end_pt(2)) ||
-            (pro_pos(2) > start_pt(2) && pro_pos(2) > end_pt(2)))
-        {
-          if (_debug) std::cout << "z exceed" << std::endl;
-          continue;
-        }
+        // if ((pro_pos(2) < start_pt(2) && pro_pos(2) < end_pt(2)) ||
+        //     (pro_pos(2) > start_pt(2) && pro_pos(2) > end_pt(2)))
+        // {
+        //   if (_debug) std::cout << "z exceed" << std::endl;
+        //   continue;
+        // }
 
         // Check not in the same voxel
         Eigen::Vector3i diff = pro_id - cur_node->index;
@@ -258,7 +259,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
               pro_state.segment(3, 3) - expand_node->state.segment(3, 3);
           Eigen::Vector3d acc_diff = pro_state.tail(3) - expand_node->state.tail(3);
 
-          if ((pro_id - expand_node->index).norm() == 0 && vel_diff.norm() < 0.2 &&
+          if ((pro_id - expand_node->index).norm() == 0 && vel_diff.norm() < 1e-1 &&
               ((!dynamic) || pro_t_id == expand_node->time_idx))
           {
             prune = true;
@@ -399,7 +400,7 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   do
   {
     T += T_step;
-    cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
+    cost = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T);
     if (cost < min_cost)
     {
       min_cost = cost;
@@ -447,7 +448,7 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
 //   for (auto t : ts)
 //   {
 //     if (t < t_bar) continue;
-//     double c = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
+//     double c = jerkCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
 //     if (c < cost)
 //     {
 //       cost = c;
@@ -457,6 +458,59 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
 //   optimal_time = t_d;
 //   return 1.0 * (1 + tie_breaker_) * cost;
 // }
+
+double KinodynamicAstar::jerkCost(const Vector3d& p_o, const Vector3d& v_o,
+                                  const Vector3d& a_o, const Vector3d& p_f,
+                                  const Vector3d& v_f, const Vector3d& a_f, double T)
+{
+  /* ---------- get coefficient ---------- */
+  const Vector3d p0 = p_o;
+  const Vector3d v0 = v_o;
+  const Vector3d a0 = a_o;
+  const Vector3d p1 = p_f;
+  const Vector3d v1 = v_f;
+  const Vector3d a1 = a_f;
+  double t_d = T;
+  MatrixXd coef(3, 6);
+
+  /*
+  p = c0 + c1t + c2t^2 + c3t^3 + c4t^4 + c5t^5
+  */
+  Vector3d c5 = -(12 * p0 - 12 * p1 + 6 * t_d * v1 + 6 * t_d * v0 - t_d * t_d * a1 +
+                  t_d * t_d * a0) /
+                (2 * pow(t_d, 5));
+  Vector3d c4 = (30 * p0 - 30 * p1 + 14 * t_d * v1 + 16 * t_d * v0 - 2 * t_d * t_d * a1 +
+                 3 * t_d * t_d * a0) /
+                (2 * pow(t_d, 4));
+  Vector3d c3 = -(20 * p0 - 20 * p1 + 8 * t_d * v1 + 12 * t_d * v0 - t_d * t_d * a1 +
+                  3 * t_d * t_d * a0) /
+                (2 * pow(t_d, 3));
+  Vector3d c2 = a0 / 2.0;
+  Vector3d c1 = v0;
+  Vector3d c0 = p0;
+
+  // Fill the coefficients matrix
+  coef.col(5) = c5;
+  coef.col(4) = c4;
+  coef.col(3) = c3;
+  coef.col(2) = c2;
+  coef.col(1) = c1;
+  coef.col(0) = c0;
+
+  // Calculate the jerk cost
+  double objective = 0.0;
+  for (int i = 0; i < 3; i++)
+  {  // For each dimension (x, y, z)
+    objective += 36.0 * pow(coef(i, 3), 2) * T +
+                 144.0 * coef(i, 4) * coef(i, 3) * pow(T, 2) +
+                 192.0 * pow(coef(i, 4), 2) * pow(T, 3) +
+                 240.0 * coef(i, 5) * coef(i, 3) * pow(T, 3) +
+                 720.0 * coef(i, 5) * coef(i, 4) * pow(T, 4) +
+                 720.0 * pow(coef(i, 5), 2) * pow(T, 5);
+  }
+
+  return objective;
+}
 
 double KinodynamicAstar::obvpCost(const Vector3d& p_o, const Vector3d& v_o,
                                   const Vector3d& a_o, const Vector3d& p_f,
@@ -511,7 +565,7 @@ double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
   double saw_T = T;
   double max_omega;
   double cost = 0;
-  double T_step = 0.3;
+  double T_step = 0.2;
   do
   {
     T += T_step;
