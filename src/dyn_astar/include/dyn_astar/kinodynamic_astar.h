@@ -28,6 +28,7 @@ class PathNode
  public:
   /* -------------------- */
   Eigen::Vector3i index;
+  Eigen::Vector3d vel_dis;
   Eigen::Matrix<double, 9, 1> state;
   double g_score, f_score;
   Eigen::Vector3d input;
@@ -73,30 +74,66 @@ struct matrix_hash : std::unary_function<T, size_t>
   }
 };
 
+struct Index6D
+{
+  Eigen::Vector3i int_part;
+  Eigen::Vector3d double_part;
+
+  bool operator==(const Index6D& other) const
+  {
+    return (int_part == other.int_part) &&
+           (double_part - other.double_part).norm() < 1e-3;
+  }
+};
+
+namespace std
+{
+template <>
+struct hash<Index6D>
+{
+  size_t operator()(const Index6D& idx) const
+  {
+    size_t seed = 0;
+    matrix_hash<Eigen::Vector3i> int_hasher;
+    matrix_hash<Eigen::Vector3d> double_hasher;
+    seed ^= int_hasher(idx.int_part) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    seed ^= double_hasher(idx.double_part) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+    return seed;
+  }
+};
+}  // namespace std
 class NodeHashTable
 {
  private:
-  /* data */
   std::unordered_map<Eigen::Vector3i, PathNodePtr, matrix_hash<Eigen::Vector3i>> data_3d_;
   std::unordered_map<Eigen::Vector4i, PathNodePtr, matrix_hash<Eigen::Vector4i>> data_4d_;
+  std::unordered_map<Index6D, PathNodePtr> data_6d_;
 
  public:
-  NodeHashTable(/* args */) {}
+  NodeHashTable() {}
   ~NodeHashTable() {}
+
   void insert(Eigen::Vector3i idx, PathNodePtr node)
   {
     data_3d_.insert(std::make_pair(idx, node));
   }
+
   void insert(Eigen::Vector3i idx, int time_idx, PathNodePtr node)
   {
     data_4d_.insert(
         std::make_pair(Eigen::Vector4i(idx(0), idx(1), idx(2), time_idx), node));
   }
 
-  PathNodePtr find(Eigen::Vector3i idx, Eigen::Vector3d vel, Eigen::Vector3d acc)
+  void insert(Eigen::Vector3i int_idx, Eigen::Vector3d double_idx, PathNodePtr node)
+  {
+    Index6D idx = {int_idx, double_idx};
+    data_6d_.insert(std::make_pair(idx, node));
+  }
+
+  PathNodePtr find(Eigen::Vector3i idx)
   {
     auto iter = data_3d_.find(idx);
-    if (iter != data_3d_.end() && (iter->second->state.segment(3, 3) - vel).norm() < 1e-1)
+    if (iter != data_3d_.end())
     {
       return iter->second;
     }
@@ -109,10 +146,18 @@ class NodeHashTable
     return iter == data_4d_.end() ? NULL : iter->second;
   }
 
+  PathNodePtr find(Eigen::Vector3i int_idx, Eigen::Vector3d double_idx)
+  {
+    Index6D idx = {int_idx, double_idx};
+    auto iter = data_6d_.find(idx);
+    return iter == data_6d_.end() ? NULL : iter->second;
+  }
+
   void clear()
   {
     data_3d_.clear();
     data_4d_.clear();
+    data_6d_.clear();
   }
 };
 
@@ -175,6 +220,7 @@ class KinodynamicAstar
   /* state propagation */
   void stateTransit(Eigen::Matrix<double, 9, 1>& state0,
                     Eigen::Matrix<double, 9, 1>& state1, Eigen::Vector3d um, double tau);
+  Eigen::Vector3d discretizeVel(const Eigen::Vector3d& vel);
   Eigen::MatrixXd f_DN(const Eigen::Vector3d& x);
 
  public:

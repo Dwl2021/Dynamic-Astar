@@ -50,6 +50,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
   cur_node->state.head(3) = start_pt;
   cur_node->state.segment(3, 3) = start_v;
   cur_node->state.tail(3) = start_a;
+  cur_node->vel_dis = discretizeVel(start_vel_);
   cur_node->index = posToIndex(start_pt);
   cur_node->g_score = 0.0;
   Eigen::VectorXd end_state(9);
@@ -79,7 +80,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     // std::cout << "time start: " << time_start <<std::endl;
   }
   else
-    expanded_nodes_.insert(cur_node->index, cur_node);
+    expanded_nodes_.insert(cur_node->index, cur_node->vel_dis, cur_node);
 
   PathNodePtr neighbor = NULL;
   PathNodePtr terminate_node = NULL;
@@ -143,7 +144,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     for (double jerk_x = -max_jer_; jerk_x <= max_jer_ + 1e-3; jerk_x += max_jer_ * res)
       for (double jerk_y = -max_jer_; jerk_y <= max_jer_ + 1e-3; jerk_y += max_jer_ * res)
       // for (double jerk_z = -max_jer_; jerk_z <= max_jer_ + 1e-3;
-      //      jerk_z += max_jer_ * res)
+      //  jerk_z += max_jer_ * res)
       {
         um << jerk_x, jerk_y, 0;
         inputs.push_back(um);
@@ -166,13 +167,12 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         // Check if in close set
         Eigen::Vector3i pro_id = posToIndex(pro_pos);
         Eigen::Vector3d pro_vel = pro_state.segment(3, 3);
+        Eigen::Vector3d pro_vel_dis = discretizeVel(pro_vel);
         Eigen::Vector3d pro_acc = pro_state.segment(6, 3);
-        // ROS_INFO("pro_pos: %f, %f, %f", pro_pos(0), pro_pos(1), pro_pos(2));
-        // ROS_INFO("pro_vel: %f, %f, %f", pro_vel(0), pro_vel(1), pro_vel(2));
-        // ROS_INFO("pro_acc: %f, %f, %f", pro_acc(0), pro_acc(1), pro_acc(2));
+
         int pro_t_id = timeToIndex(pro_t);
         PathNodePtr pro_node = dynamic ? expanded_nodes_.find(pro_id, pro_t_id)
-                                       : expanded_nodes_.find(pro_id, pro_vel, pro_acc);
+                                       : expanded_nodes_.find(pro_id, pro_vel_dis);
         if (pro_node != NULL && pro_node->node_state == IN_CLOSE_SET)
         {
           if (_debug) std::cout << "close" << std::endl;
@@ -197,20 +197,19 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
           continue;
         }
 
-        // if ((pro_pos(2) < start_pt(2) && pro_pos(2) < end_pt(2)) ||
-        //     (pro_pos(2) > start_pt(2) && pro_pos(2) > end_pt(2)))
-        // {
-        //   if (_debug) std::cout << "z exceed" << std::endl;
-        //   continue;
-        // }
+        if ((pro_pos(2) < start_pt(2) && pro_pos(2) < end_pt(2)) ||
+            (pro_pos(2) > start_pt(2) && pro_pos(2) > end_pt(2)))
+        {
+          if (_debug) std::cout << "z exceed" << std::endl;
+          continue;
+        }
 
         // Check not in the same voxel
         Eigen::Vector3i diff = pro_id - cur_node->index;
         int diff_time = pro_t_id - cur_node->time_idx;
-        Eigen::Vector3d diff_vel = pro_vel - cur_node->state.segment(3, 3);
-        Eigen::Vector3d diff_acc = pro_acc - cur_node->state.tail(3);
+        Eigen::Vector3d diff_vel = pro_vel_dis - cur_node->vel_dis;
 
-        if (diff.norm() == 0 && diff_vel.norm() < 1e-1 && ((!dynamic) || diff_time == 0))
+        if (diff.norm() == 0 && diff_vel.norm() == 0 && ((!dynamic) || diff_time == 0))
         {
           if (_debug) std::cout << "same" << std::endl;
           continue;
@@ -255,11 +254,9 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         {
           PathNodePtr expand_node = tmp_expand_nodes[j];
 
-          Eigen::Vector3d vel_diff =
-              pro_state.segment(3, 3) - expand_node->state.segment(3, 3);
-          Eigen::Vector3d acc_diff = pro_state.tail(3) - expand_node->state.tail(3);
+          Eigen::Vector3d vel_diff = pro_vel_dis - expand_node->vel_dis;
 
-          if ((pro_id - expand_node->index).norm() == 0 && vel_diff.norm() < 1e-1 &&
+          if ((pro_id - expand_node->index).norm() == 0 && vel_diff.norm() == 0 &&
               ((!dynamic) || pro_t_id == expand_node->time_idx))
           {
             prune = true;
@@ -268,6 +265,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
               expand_node->f_score = tmp_f_score;
               expand_node->g_score = tmp_g_score;
               expand_node->state = pro_state;
+              expand_node->vel_dis = pro_vel_dis;
               expand_node->input = um;
               expand_node->duration = tau;
               if (dynamic) expand_node->time = cur_node->time + tau;
@@ -284,6 +282,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
             pro_node = path_node_pool_[use_node_num_];
             pro_node->index = pro_id;
             pro_node->state = pro_state;
+            pro_node->vel_dis = pro_vel_dis;
             pro_node->f_score = tmp_f_score;
             pro_node->g_score = tmp_g_score;
             pro_node->input = um;
@@ -300,7 +299,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
             if (dynamic)
               expanded_nodes_.insert(pro_id, pro_node->time, pro_node);
             else
-              expanded_nodes_.insert(pro_id, pro_node);
+              expanded_nodes_.insert(pro_id, pro_vel_dis, pro_node);
 
             tmp_expand_nodes.push_back(pro_node);
 
@@ -317,6 +316,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
             {
               // pro_node->index = pro_id;
               pro_node->state = pro_state;
+              pro_node->vel_dis = pro_vel_dis;
               pro_node->f_score = tmp_f_score;
               pro_node->g_score = tmp_g_score;
               pro_node->input = um;
@@ -400,7 +400,7 @@ void KinodynamicAstar::retrievePath(PathNodePtr end_node)
 //   do
 //   {
 //     T += T_step;
-//     cost = obvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T);
+//     cost = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, T, max_omega);
 //     if (cost < min_cost)
 //     {
 //       min_cost = cost;
@@ -443,10 +443,11 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   double cost = 100000000;
   double t_d = t_bar;
   double max_omega;
+
   for (auto t : ts)
   {
     if (t < t_bar) continue;
-    double c = jerkCost(p_o, v_o, a_o, p_f, v_f, a_f, t);
+    double c = bvpCost(p_o, v_o, a_o, p_f, v_f, a_f, t, max_omega);
     if (c < cost)
     {
       cost = c;
@@ -455,59 +456,6 @@ double KinodynamicAstar::estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x
   }
   optimal_time = t_d;
   return 1.0 * (1 + tie_breaker_) * cost;
-}
-
-double KinodynamicAstar::jerkCost(const Vector3d& p_o, const Vector3d& v_o,
-                                  const Vector3d& a_o, const Vector3d& p_f,
-                                  const Vector3d& v_f, const Vector3d& a_f, double T)
-{
-  /* ---------- get coefficient ---------- */
-  const Vector3d p0 = p_o;
-  const Vector3d v0 = v_o;
-  const Vector3d a0 = a_o;
-  const Vector3d p1 = p_f;
-  const Vector3d v1 = v_f;
-  const Vector3d a1 = a_f;
-  double t_d = T;
-  MatrixXd coef(3, 6);
-
-  /*
-  p = c0 + c1t + c2t^2 + c3t^3 + c4t^4 + c5t^5
-  */
-  Vector3d c5 = -(12 * p0 - 12 * p1 + 6 * t_d * v1 + 6 * t_d * v0 - t_d * t_d * a1 +
-                  t_d * t_d * a0) /
-                (2 * pow(t_d, 5));
-  Vector3d c4 = (30 * p0 - 30 * p1 + 14 * t_d * v1 + 16 * t_d * v0 - 2 * t_d * t_d * a1 +
-                 3 * t_d * t_d * a0) /
-                (2 * pow(t_d, 4));
-  Vector3d c3 = -(20 * p0 - 20 * p1 + 8 * t_d * v1 + 12 * t_d * v0 - t_d * t_d * a1 +
-                  3 * t_d * t_d * a0) /
-                (2 * pow(t_d, 3));
-  Vector3d c2 = a0 / 2.0;
-  Vector3d c1 = v0;
-  Vector3d c0 = p0;
-
-  // Fill the coefficients matrix
-  coef.col(5) = c5;
-  coef.col(4) = c4;
-  coef.col(3) = c3;
-  coef.col(2) = c2;
-  coef.col(1) = c1;
-  coef.col(0) = c0;
-
-  // Calculate the jerk cost
-  double objective = 0.0;
-  for (int i = 0; i < 3; i++)
-  {  // For each dimension (x, y, z)
-    objective += 36.0 * pow(coef(i, 3), 2) * T +
-                 144.0 * coef(i, 4) * coef(i, 3) * pow(T, 2) +
-                 192.0 * pow(coef(i, 4), 2) * pow(T, 3) +
-                 240.0 * coef(i, 5) * coef(i, 3) * pow(T, 3) +
-                 720.0 * coef(i, 5) * coef(i, 4) * pow(T, 4) +
-                 720.0 * pow(coef(i, 5), 2) * pow(T, 5);
-  }
-
-  return objective;
 }
 
 double KinodynamicAstar::obvpCost(const Vector3d& p_o, const Vector3d& v_o,
@@ -563,7 +511,7 @@ double KinodynamicAstar::estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2,
   double saw_T = T;
   double max_omega;
   double cost = 0;
-  double T_step = 0.2;
+  double T_step = 0.3;
   do
   {
     T += T_step;
@@ -1024,6 +972,35 @@ Eigen::Vector3i KinodynamicAstar::posToIndex(Eigen::Vector3d pt)
 {
   Vector3i idx = ((pt - origin_) * inv_resolution_).array().floor().cast<int>();
   return idx;
+}
+
+Eigen::Vector3d KinodynamicAstar::discretizeVel(const Eigen::Vector3d& vel)
+{
+  const int NUM_DIRECTIONS = 24;
+  const int NUM_LEVELS = 10;
+
+  // Calculate angle and magnitude
+  double angle = std::atan2(vel.y(), vel.x());
+  double magnitude = vel.norm();
+
+  // Discretize direction
+  int direction = std::round(angle / (2 * M_PI / NUM_DIRECTIONS));
+  direction = (direction + NUM_DIRECTIONS) % NUM_DIRECTIONS;  // Ensure positive index
+
+  // Discretize magnitude
+  int level = std::round(magnitude / (max_vel_ / NUM_LEVELS));
+  level = std::min(level, NUM_LEVELS - 1);  // Clamp to max level
+
+  // Calculate discretized velocity
+  double discretized_angle = direction * (2 * M_PI / NUM_DIRECTIONS);
+  double discretized_magnitude = level * (max_vel_ / NUM_LEVELS);
+
+  Eigen::Vector3d discretized_vel;
+  discretized_vel.x() = discretized_magnitude * std::cos(discretized_angle);
+  discretized_vel.y() = discretized_magnitude * std::sin(discretized_angle);
+  discretized_vel.z() = vel.z();
+
+  return discretized_vel;
 }
 
 int KinodynamicAstar::timeToIndex(double time)

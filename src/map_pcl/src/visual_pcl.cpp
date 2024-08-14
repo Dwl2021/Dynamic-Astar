@@ -100,8 +100,8 @@ int main(int argc, char** argv)
   genPlaneCloud(plane_cloud);
   cloud += plane_cloud;
   // cloud = plane_cloud;
-  // cloud.clear();
-  // cloud.points.push_back(pcl::PointXYZ(0, 0, 0));
+  cloud.clear();
+  cloud.points.push_back(pcl::PointXYZ(0, 0, 0));
 
   pcl::toROSMsg(cloud, output);
   output.header.frame_id = frame_id;
