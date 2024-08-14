@@ -1,25 +1,25 @@
 <launch>
   <!-- launch the example node -->
   <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
-    <param name="start_x" value="-5" />
-    <param name="start_y" value="-1" />
-    <param name="start_z" value="1" />
-    <param name="start_vel_x" value="0" />
+    <param name="start_x" value="-0" />
+    <param name="start_y" value="-0.326" />
+    <param name="start_z" value="1.027" />
+    <param name="start_vel_x" value="4" />
     <param name="start_vel_y" value="0" />
     <param name="start_vel_z" value="0" />
     <param name="start_acc_x" value="0" />
-    <param name="start_acc_y" value="0" />
+    <param name="start_acc_y" value="-5.592" />
     <param name="start_acc_z" value="0" />
     <param name="start_jer_x" value="0" />
     <param name="start_jer_y" value="0" />
     <param name="start_jer_z" value="0" />
-    <param name="goal_x" value="0.3" />
-    <param name="goal_y" value="-1" />
-    <param name="goal_z" value="1.027" />
+    <param name="goal_x" value="5" />
+    <param name="goal_y" value="1" />
+    <param name="goal_z" value="1" />
     <param name="goal_vel_x" value="0" />
-    <param name="goal_vel_y" value="5" />
+    <param name="goal_vel_y" value="0" />
     <param name="goal_vel_z" value="0" />
-    <param name="goal_acc_x" value="6" />
+    <param name="goal_acc_x" value="0" />
     <param name="goal_acc_y" value="0" />
     <param name="goal_acc_z" value="0" />
   </node>
@@ -28,11 +28,11 @@
   <include file="$(find plan_manage)/launch/kastar.xml" />
 
   <arg name="object_px" default="0" />
-  <arg name="object_py" default="-1" />
+  <arg name="object_py" default="0" />
   <arg name="object_pz" default="0.9" />
 
-  <arg name="object_axis_x" default="0.0" />
-  <arg name="object_axis_y" default="1.0" />
+  <arg name="object_axis_x" default="1.0" />
+  <arg name="object_axis_y" default="0.0" />
   <arg name="object_axis_z" default="0.0" />
   <arg name="object_theta" default="1.2" />
 
