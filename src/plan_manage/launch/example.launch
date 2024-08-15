@@ -1,34 +1,40 @@
 <launch>
   <!-- launch the example node -->
+  <!-- [ INFO] [1723708709.019881092]: grasp_pt: -1.000, -1.326, 1.027
+[ INFO] [1723708709.019891252]: grasp_vel: 4.000, 0.000, 0.000
+[ INFO] [1723708709.019900463]: grasp_acc: 0.000, -5.592, 0.000
+[ INFO] [1723708709.019909914]: end_pt: 5.000, 1.000, 1.000
+[ INFO] [1723708709.019917014]: goal_vel: 0.000, 0.000, 0.000
+[ INFO] [1723708709.019926975]: goal_acc: 0.000, 0.000, 0.000 -->
   <node name="plan_manage_node" pkg="plan_manage" type="plan_manage_node" output="screen">
-    <param name="start_x" value="-5" />
-    <param name="start_y" value="-1" />
-    <param name="start_z" value="1" />
-    <param name="start_vel_x" value="0" />
+    <param name="start_x" value="-1" />
+    <param name="start_y" value="-1.326" />
+    <param name="start_z" value="1.027" />
+    <param name="start_vel_x" value="4" />
     <param name="start_vel_y" value="0" />
     <param name="start_vel_z" value="0" />
     <param name="start_acc_x" value="0" />
-    <param name="start_acc_y" value="0" />
+    <param name="start_acc_y" value="-5.592" />
     <param name="start_acc_z" value="0" />
     <param name="start_jer_x" value="0" />
     <param name="start_jer_y" value="0" />
     <param name="start_jer_z" value="0" />
-    <param name="goal_x" value="0" />
-    <param name="goal_y" value="-0.326" />
-    <param name="goal_z" value="1.027" />
-    <param name="goal_vel_x" value="4" />
+    <param name="goal_x" value="5" />
+    <param name="goal_y" value="1" />
+    <param name="goal_z" value="1" />
+    <param name="goal_vel_x" value="0" />
     <param name="goal_vel_y" value="0" />
     <param name="goal_vel_z" value="0" />
     <param name="goal_acc_x" value="0" />
-    <param name="goal_acc_y" value="-6" />
+    <param name="goal_acc_y" value="0" />
     <param name="goal_acc_z" value="0" />
   </node>
 
   <!-- parameters -->
   <include file="$(find plan_manage)/launch/kastar.xml" />
 
-  <arg name="object_px" default="0" />
-  <arg name="object_py" default="0" />
+  <arg name="object_px" default="-1" />
+  <arg name="object_py" default="-1" />
   <arg name="object_pz" default="0.9" />
 
   <arg name="object_axis_x" default="1.0" />

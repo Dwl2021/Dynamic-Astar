@@ -190,6 +190,7 @@ class KinodynamicAstar
   double tolerance_;
   double tie_breaker_;
   bool optimistic_;
+  double time_res_, jerk_res_;
 
   /* map */
   double resolution_, inv_resolution_, time_resolution_, inv_time_resolution_;

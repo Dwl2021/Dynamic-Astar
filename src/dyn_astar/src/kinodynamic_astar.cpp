@@ -129,7 +129,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     // ROS_INFO("iter num: %d", iter_num_);
     // ROS_INFO("heuristic: %f", cur_node->f_score - cur_node->g_score);
 
-    double res = 1 / 3.0, time_res = 1 / 1.0;
+    double res = jerk_res_, time_res = time_res_;
     Eigen::Matrix<double, 9, 1> cur_state = cur_node->state;
     Eigen::Matrix<double, 9, 1> pro_state;
     std::vector<PathNodePtr> tmp_expand_nodes;
@@ -138,7 +138,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     std::vector<Eigen::Vector3d> inputs;
     std::vector<double> durations;
     Eigen::Vector3d cur_pos = cur_state.head(3);
-    ROS_INFO("traverse points: %f, %f, %f", cur_pos(0), cur_pos(1), cur_pos(2));
+    // ROS_INFO("traverse points: %f, %f, %f", cur_pos(0), cur_pos(1), cur_pos(2));
     Eigen::Vector3d cur_vel = cur_state.segment(3, 3);
     // ROS_INFO("traverse vel: %f, %f, %f", cur_vel(0), cur_vel(1), cur_vel(2));
 
@@ -352,7 +352,9 @@ void KinodynamicAstar::setParam(ros::NodeHandle& nh)
   nh.param("/search/rho", rho_, -1.0);
   nh.param("/search/horizon", horizon_, -1.0);
   nh.param("/search/resolution_astar", resolution_, -1.0);
-  nh.param("/search/time_resolution", time_resolution_, -1.0);
+  nh.param("/search/resolution_input", jerk_res_, -1.0);
+  nh.param("/search/resolution_time", time_res_, -1.0);
+  nh.param("/search/time_id_resolution", time_resolution_, -1.0);
   nh.param("/search/lambda_heu", lambda_heu_, -1.0);
   nh.param("/search/allocate_num", allocate_num_, -1);
   nh.param("/search/check_num", check_num_, -1);
