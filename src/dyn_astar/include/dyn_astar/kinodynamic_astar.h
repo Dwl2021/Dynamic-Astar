@@ -206,14 +206,6 @@ class KinodynamicAstar
   std::vector<double> quartic(double a, double b, double c, double d, double e);
   bool computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd state2, double time);
   double estimateHeuristic(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
-  double estimateTime(Eigen::VectorXd x1, Eigen::VectorXd x2, double& optimal_time);
-
-  double bvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
-                 const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f, double T,
-                 double& max_omega);
-  double obvpCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
-                  const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f,
-                  double T);
   double jerkCost(const Vector3d& p_o, const Vector3d& v_o, const Vector3d& a_o,
                   const Vector3d& p_f, const Vector3d& v_f, const Vector3d& a_f,
                   double T);
