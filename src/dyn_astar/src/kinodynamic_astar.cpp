@@ -522,7 +522,7 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   double s1, s2, s3, s4, s5;
 
   /* ---------- forward checking of trajectory ---------- */
-  double t_delta = 0.05;
+  double t_delta = time / 60;
   for (double time = t_delta; time <= t_d; time += t_delta)
   {
     s1 = time;
@@ -532,17 +532,17 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
     s5 = s2 * s3;
     beta0 << 1, s1, s2, s3, s4, s5;
     // beta1 << 0, 1, 2 * s1, 3 * s2, 4 * s3, 5 * s4;
-    beta2 << 0, 0, 2, 6 * s1, 12 * s2, 20 * s3;
-    beta3 << 0, 0, 0, 6, 24 * s1, 60 * s2;
+    // beta2 << 0, 0, 2, 6 * s1, 12 * s2, 20 * s3;
+    // beta3 << 0, 0, 0, 6, 24 * s1, 60 * s2;
 
     pos = coef * beta0;
     // vel = coef * beta1;
-    acc = coef * beta2;
-    jer = coef * beta3;
+    // acc = coef * beta2;
+    // jer = coef * beta3;
 
-    Vector3d thrust = acc + Eigen::Vector3d(0, 0, 9.81);
-    Vector3d zb_dot = f_DN(thrust) * jer;
-    double z_dot_norm = zb_dot.norm();
+    // Vector3d thrust = acc + Eigen::Vector3d(0, 0, 9.81);
+    // Vector3d zb_dot = f_DN(thrust) * jer;
+    // double z_dot_norm = zb_dot.norm();
     // ROS_INFO("SHOT OMEGA: %f", z_dot_norm);
 
     if (pos(0) < origin_(0) || pos(0) >= origin_(0) + map_size_3d_(0) ||
@@ -853,8 +853,8 @@ Eigen::Vector3i KinodynamicAstar::posToIndex(Eigen::Vector3d pt)
 
 Eigen::Vector3d KinodynamicAstar::discretizeVel(const Eigen::Vector3d& vel)
 {
-  const int NUM_DIRECTIONS = 48;
-  const int NUM_LEVELS = 20;
+  const int NUM_DIRECTIONS = 24;
+  const int NUM_LEVELS = 10;
 
   // Calculate angle and magnitude
   double angle = std::atan2(vel.y(), vel.x());
