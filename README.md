@@ -40,7 +40,7 @@ catkin_make
 
 ### Set start and goal
 
-Modify in `src/plan_manage/launch/example.launch`
+Modify in `src/dyn_astar_test/launch/example.launch`
 ```cpp
 Eigen::Vector3d start(0, 0, 1);
 Eigen::Vector3d start_vel(0, 0, 0);
@@ -51,11 +51,11 @@ Eigen::Vector3d goal_vel(-2, 0, 0);
 
 ### Path search parameters
 
-Modify in `src/plan_manage/launch/kastar.xml`
+Modify in `src/dyn_astar_test/launch/kastar.xml`
 
 ### Map
 
-Modify in `src/map_pcl/pcd` and if you want to make your own map, more details can be found in `src/map_pcl/pcd/map_generation`.
+Modify in `src/dyn_astar_test/pcd` and if you want to make your own map, more details can be found in `src/dyn_astar_test/pcd/map_generation`.
 
 ## Development
 

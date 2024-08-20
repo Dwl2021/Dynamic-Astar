@@ -1,2 +1,2 @@
-source ./devel/setup.bash
-roslaunch plan_manage example.launch
+source ../devel/setup.bash
+roslaunch dyn_astar_test example.launch
