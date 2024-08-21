@@ -522,7 +522,7 @@ bool KinodynamicAstar::computeShotTraj(Eigen::VectorXd state1, Eigen::VectorXd s
   double s1, s2, s3, s4, s5;
 
   /* ---------- forward checking of trajectory ---------- */
-  double t_delta = time / 60;
+  double t_delta = time / 10;
   for (double time = t_delta; time <= t_d; time += t_delta)
   {
     s1 = time;

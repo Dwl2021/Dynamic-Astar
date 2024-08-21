@@ -75,7 +75,8 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "visual_pcl_node");
   ros::NodeHandle nh("~");
 
-  nh.param("pcd_file_path", pcd_file_path, std::string("package://dyn_astar_test/pcd/map.pcd"));
+  nh.param("pcd_file_path", pcd_file_path,
+           std::string("package://dyn_astar_test/pcd/map.pcd"));
   nh.param("frame_id", frame_id, std::string("world"));
   nh.getParam("object_px", object_p.x());
   nh.getParam("object_py", object_p.y());

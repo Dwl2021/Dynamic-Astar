@@ -1,5 +1,5 @@
 <launch>
-  <arg name="resolution" default="0.3" />
+  <arg name="resolution" default="0.2" />
 
   <param name="map/x_size" value="12" />
   <param name="map/y_size" value="8" />
@@ -12,7 +12,7 @@
 
   <!-- kinodynamic path searching -->
   <param name="search/max_tau" value="0.4" type="double" />
-  <param name="search/max_vel" value="10" type="double" />
+  <param name="search/max_vel" value="8" type="double" />
   <param name="search/max_acc" value="10" type="double" />
   <param name="search/max_jer" value="8" type="double" />
   <param name="search/max_omega" value="3" type="double" />
@@ -27,5 +27,5 @@
   <param name="search/acc_margin" value="0" type="double" />
   <param name="search/allocate_num" value="2000000" type="int" />
   <param name="search/check_num" value="5" type="int" />
-  <param name="search/tolerance" value="2" type="double" />
+  <param name="search/tolerance" value="1" type="double" />
 </launch>
