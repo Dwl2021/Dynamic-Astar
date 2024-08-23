@@ -13,8 +13,8 @@ Eigen::Vector3d object_axis, object_p;
 double object_theta;
 ros::Publisher pcl_pub;
 
-void calPose(const Eigen::Vector3d& axis, const double& theta, Eigen::Quaterniond& q,
-             Eigen::Vector3d& zd)
+void calPose(const Eigen::Vector3d& axis, const double& theta,
+             Eigen::Quaterniond& q, Eigen::Vector3d& zd)
 {
   Eigen::Quaterniond land_q;
   land_q.w() = cos(theta / 2);

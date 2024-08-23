@@ -1,5 +1,5 @@
-#include <dyn_astar_test/visualization.h>
 #include <dyn_astar/kinodynamic_astar.h>
+#include <dyn_astar_test/visualization.h>
 #include <ros/ros.h>
 
 #include <Eigen/Core>
@@ -62,8 +62,8 @@ int main(int argc, char** argv)
     if (map_util->has_map_() && !plan_once)
     {
       plan_once = true;
-      success =
-          kastar.search(start, start_vel, start_acc, start_jer, goal, goal_vel, goal_acc);
+      success = kastar.search(start, start_vel, start_acc, start_jer, goal,
+                              goal_vel, goal_acc);
       ROS_INFO(success == 2 ? "\033[1;32mPATH FOUND!\033[0m"
                             : "\033[1;31mPATH NOT FOUND\033[0m");
       /* visual path */

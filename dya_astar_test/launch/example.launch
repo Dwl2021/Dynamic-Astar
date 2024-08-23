@@ -51,7 +51,7 @@
     <remap from="~global_map" to="/global_map" />
   </node>
 
-  <node name="rviz" pkg="rviz" type="rviz"
+  <!-- <node name="rviz" pkg="rviz" type="rviz"
     args="-d $(find dyn_astar_test)/config/rviz.rviz"
-    output="screen" />
+    output="screen" /> -->
 </launch>
