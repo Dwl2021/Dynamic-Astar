@@ -54,7 +54,7 @@ int main(int argc, char** argv)
     /* Plan once */
     if (map_util->has_map_() && !plan_once)
     {
-      success = kastar.search(start, start_vel, start_acc, goal, goal_vel, false);
+      success = kastar.search(start, start_vel, start_acc, goal, goal_vel);
       ROS_INFO(success == 2 ? "\033[1;32mPATH FOUND!\033[0m"
                             : "\033[1;31mPATH NOT FOUND\033[0m");
       /* visual path */
