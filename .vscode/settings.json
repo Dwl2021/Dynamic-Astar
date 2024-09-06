@@ -4,9 +4,11 @@
   "C_Cpp.clang_format_style": "{ BasedOnStyle: Google, IndentWidth: 2, ColumnLimit: 90, BreakBeforeBraces: Allman }",
   "editor.tabSize": 2,
   "[cpp]": {
-      "editor.defaultFormatter": "ms-vscode.cpptools"
+    "editor.defaultFormatter": "ms-vscode.cpptools"
   },
-  "editor.rulers": [100],
+  "editor.rulers": [
+    100
+  ],
   "editor.wordWrap": "off",
   "files.associations": {
     "ostream": "cpp",
@@ -83,6 +85,10 @@
     "*.ipp": "cpp"
   },
   "python.autoComplete.extraPaths": [
+    "/home/dwl/amg-planner/devel/lib/python3/dist-packages",
+    "/opt/ros/noetic/lib/python3/dist-packages"
+  ],
+  "python.analysis.extraPaths": [
     "/home/dwl/amg-planner/devel/lib/python3/dist-packages",
     "/opt/ros/noetic/lib/python3/dist-packages"
   ]

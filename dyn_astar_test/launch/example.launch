@@ -1,0 +1,36 @@
+<launch>
+  <!-- launch the example node -->
+  <node name="dyn_astar_test_node" pkg="dyn_astar_test" type="dyn_astar_test_node" output="screen">
+    <param name="start_x" value="0" />
+    <param name="start_y" value="0" />
+    <param name="start_z" value="1" />
+    <param name="start_vel_x" value="0" />
+    <param name="start_vel_y" value="1" />
+    <param name="start_vel_z" value="0" />
+    <param name="start_acc_x" value="0" />
+    <param name="start_acc_y" value="0" />
+    <param name="start_acc_z" value="0" />
+    <param name="goal_x" value="30" />
+    <param name="goal_y" value="-20" />
+    <param name="goal_z" value="1" />
+    <param name="goal_vel_x" value="3" />
+    <param name="goal_vel_y" value="-0" />
+    <param name="goal_vel_z" value="0" />
+  </node>
+
+  <!-- parameters -->
+  <include file="$(find dyn_astar_test)/launch/kastar.xml" />
+
+  <!-- point cloud -->
+  <node name="visual_pcl_node" pkg="dyn_astar_test"
+    type="visual_pcl_node" output="screen">
+    <param name="pcd_file_path" value="$(find map_pcl)/pcd/map.pcd" />
+    <param name="frame_id" value="world" />
+    <remap from="~global_map" to="/global_map" />
+  </node>
+
+
+  <node name="rviz" pkg="rviz" type="rviz"
+    args="-d $(find dyn_astar_test)/config/rviz.rviz"
+    output="screen" />
+</launch>
