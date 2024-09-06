@@ -43,7 +43,7 @@ class PathNode
     parent = NULL;
     node_state = NOT_EXPAND;
   }
-  ~PathNode(){};
+  ~PathNode() {};
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
 typedef PathNode* PathNodePtr;
@@ -162,7 +162,7 @@ class KinodynamicAstar
                     Eigen::Matrix<double, 6, 1>& state1, Eigen::Vector3d um, double tau);
 
  public:
-  KinodynamicAstar(){};
+  KinodynamicAstar() {};
   ~KinodynamicAstar();
 
   enum
@@ -179,7 +179,7 @@ class KinodynamicAstar
   void reset();
   int search(Eigen::Vector3d start_pt, Eigen::Vector3d start_vel,
              Eigen::Vector3d start_acc, Eigen::Vector3d end_pt, Eigen::Vector3d end_vel,
-             bool init, bool dynamic = false, double time_start = -1.0);
+             bool dynamic = false, double time_start = -1.0);
 
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
 
@@ -187,7 +187,7 @@ class KinodynamicAstar
 
   // convert from std::vector<Eigen::Vector3d> to vec_Vec3f
   static void convert_path(const std::vector<Eigen::Vector3d>& path, vec_Vec3f& result);
-
+  bool hasMap();
   void getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
                   std::vector<Eigen::Vector3d>& start_end_derivatives);
 

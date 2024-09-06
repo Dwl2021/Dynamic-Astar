@@ -37,8 +37,7 @@ KinodynamicAstar::~KinodynamicAstar()
 
 int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
                              Eigen::Vector3d start_a, Eigen::Vector3d end_pt,
-                             Eigen::Vector3d end_v, bool init, bool dynamic,
-                             double time_start)
+                             Eigen::Vector3d end_v, bool dynamic, double time_start)
 {
   start_vel_ = start_v;
   start_acc_ = start_a;
@@ -74,7 +73,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
 
   PathNodePtr neighbor = NULL;
   PathNodePtr terminate_node = NULL;
-  bool init_search = init;
+  bool debug = false;
   const int tolerance = ceil(1 / resolution_);
 
   while (!open_set_.empty())
@@ -95,7 +94,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         // Check whether shot traj exist
         estimateHeuristic(cur_node->state, end_state, time_to_goal);
         computeShotTraj(cur_node->state, end_state, time_to_goal);
-        if (init_search) ROS_ERROR("Shot in first search loop!");
+        if (debug) ROS_ERROR("Shot in first search loop!");
       }
     }
 
@@ -143,26 +142,16 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
     double pro_t;
     std::vector<Eigen::Vector3d> inputs;
     std::vector<double> durations;
-    if (init_search)
-    {
-      inputs.push_back(start_acc_);
-      for (double tau = time_res_init * init_max_tau_; tau <= init_max_tau_ + 1e-3;
-           tau += time_res_init * init_max_tau_)
-        durations.push_back(tau);
-      init_search = false;
-    }
-    else
-    {
-      for (double ax = -max_acc_; ax <= max_acc_ + 1e-3; ax += max_acc_ * res)
-        for (double ay = -max_acc_; ay <= max_acc_ + 1e-3; ay += max_acc_ * res)
-          for (double az = -max_acc_; az <= max_acc_ + 1e-3; az += max_acc_ * res)
-          {
-            um << ax, ay, az;
-            inputs.push_back(um);
-          }
-      for (double tau = time_res * max_tau_; tau <= max_tau_; tau += time_res * max_tau_)
-        durations.push_back(tau);
-    }
+
+    for (double ax = -max_acc_; ax <= max_acc_ + 1e-3; ax += max_acc_ * res)
+      for (double ay = -max_acc_; ay <= max_acc_ + 1e-3; ay += max_acc_ * res)
+        for (double az = -max_acc_; az <= max_acc_ + 1e-3; az += max_acc_ * res)
+        {
+          um << ax, ay, az;
+          inputs.push_back(um);
+        }
+    for (double tau = time_res * max_tau_; tau <= max_tau_; tau += time_res * max_tau_)
+      durations.push_back(tau);
 
     // std::cout << "cur state:" << cur_state.head(3).transpose() <<std::endl;
     for (int i = 0; i < inputs.size(); ++i)
@@ -190,7 +179,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         if (fabs(pro_v(0)) > max_vel_ || fabs(pro_v(1)) > max_vel_ ||
             fabs(pro_v(2)) > max_vel_)
         {
-          if (init_search) std::cout << "vel" << std::endl;
+          if (debug) std::cout << "vel" << std::endl;
           continue;
         }
 
@@ -199,7 +188,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v,
         int diff_time = pro_t_id - cur_node->time_idx;
         if (diff.norm() == 0 && ((!dynamic) || diff_time == 0))
         {
-          if (init_search) std::cout << "same" << std::endl;
+          if (debug) std::cout << "same" << std::endl;
           continue;
         }
         // Check safety
@@ -564,6 +553,8 @@ void KinodynamicAstar::setMap(const std::shared_ptr<MapUtil<3>>& map_util)
 {
   this->map_util_ = map_util;
 }
+
+bool KinodynamicAstar::hasMap() { return map_util_->has_map_(); }
 
 void KinodynamicAstar::reset()
 {
