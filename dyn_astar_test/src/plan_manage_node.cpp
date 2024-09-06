@@ -10,8 +10,7 @@ int main(int argc, char** argv)
   ros::NodeHandle nh, nh_priv("~");
 
   /* The result path can be obtain in two type */
-  std::vector<Eigen::Vector3d> path;
-  vec_Vec3f path_optional;
+  vec_Vec3f path;
 
   Visualizer visualizer(nh);
   bool plan_once = false;
@@ -62,12 +61,10 @@ int main(int argc, char** argv)
       if (success == 2)
       {
         /* vec_Vec3f */
-        path = kastar.getKinoTraj(0.01);
-        /* [optional] convert from vector<Eigen::Vector3d> to vec_Vec3f */
-        kastar.convert_path(path, path_optional);
+        kastar.getKinoTraj(0.01, path);
 
         /* visualize */
-        visualizer.visualizePath(path_optional);
+        visualizer.visualizePath(path);
         plan_once = true;
       }
     }

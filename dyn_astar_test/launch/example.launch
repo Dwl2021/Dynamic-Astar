@@ -24,7 +24,7 @@
   <!-- point cloud -->
   <node name="visual_pcl_node" pkg="dyn_astar_test"
     type="visual_pcl_node" output="screen">
-    <param name="pcd_file_path" value="$(find map_pcl)/pcd/map.pcd" />
+    <param name="pcd_file_path" value="$(find dyn_astar_test)/pcd/map.pcd" />
     <param name="frame_id" value="world" />
     <remap from="~global_map" to="/global_map" />
   </node>

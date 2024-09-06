@@ -577,9 +577,9 @@ void KinodynamicAstar::reset()
   has_path_ = false;
 }
 
-std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
+void KinodynamicAstar::getKinoTraj(double delta_t, std::vector<Eigen::Vector3d>& path)
 {
-  std::vector<Vector3d> state_list;
+  path.clear();
 
   /* ---------- get traj of searching ---------- */
   PathNodePtr node = path_nodes_.back();
@@ -594,11 +594,11 @@ std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
     for (double t = duration; t >= -1e-5; t -= delta_t)
     {
       stateTransit(x0, xt, ut, t);
-      state_list.push_back(xt.head(3));
+      path.push_back(xt.head(3));
     }
     node = node->parent;
   }
-  reverse(state_list.begin(), state_list.end());
+  reverse(path.begin(), path.end());
   /* ---------- get traj of one shot ---------- */
   if (is_shot_succ_)
   {
@@ -614,11 +614,59 @@ std::vector<Eigen::Vector3d> KinodynamicAstar::getKinoTraj(double delta_t)
         poly1d = coef_shot_.row(dim);
         coord(dim) = poly1d.dot(time);
       }
-      state_list.push_back(coord);
+      path.push_back(coord);
     }
   }
+}
 
-  return state_list;
+void KinodynamicAstar::getKinoTraj(double delta_t, vec_Vec3f& path_)
+{
+  std::vector<Eigen::Vector3d> path;
+
+  /* ---------- get traj of searching ---------- */
+  PathNodePtr node = path_nodes_.back();
+  Matrix<double, 6, 1> x0, xt;
+
+  while (node->parent != NULL)
+  {
+    Vector3d ut = node->input;
+    double duration = node->duration;
+    x0 = node->parent->state;
+
+    for (double t = duration; t >= -1e-5; t -= delta_t)
+    {
+      stateTransit(x0, xt, ut, t);
+      path.push_back(xt.head(3));
+    }
+    node = node->parent;
+  }
+  reverse(path.begin(), path.end());
+  /* ---------- get traj of one shot ---------- */
+  if (is_shot_succ_)
+  {
+    Vector3d coord;
+    VectorXd poly1d, time(4);
+
+    for (double t = delta_t; t <= t_shot_; t += delta_t)
+    {
+      for (int j = 0; j < 4; j++) time(j) = pow(t, j);
+
+      for (int dim = 0; dim < 3; dim++)
+      {
+        poly1d = coef_shot_.row(dim);
+        coord(dim) = poly1d.dot(time);
+      }
+      path.push_back(coord);
+    }
+  }
+  Vec3f tmp_path;
+  for (auto tmp_state : path)
+  {
+    tmp_path(0) = tmp_state(0);
+    tmp_path(1) = tmp_state(1);
+    tmp_path(2) = tmp_state(2);
+    path_.push_back(tmp_path);
+  }
 }
 
 void KinodynamicAstar::getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
@@ -759,15 +807,4 @@ void KinodynamicAstar::stateTransit(Eigen::Matrix<double, 6, 1>& state0,
   integral.tail(3) = tau * um;
 
   state1 = phi_ * state0 + integral;
-}
-
-void KinodynamicAstar::convert_path(const std::vector<Eigen::Vector3d>& result,
-                                    vec_Vec3f& path)
-{
-  path.clear();
-  path.reserve(result.size());
-  for (const auto& vec : result)
-  {
-    path.push_back(vec);
-  }
 }
