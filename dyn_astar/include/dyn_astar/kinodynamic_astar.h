@@ -135,14 +135,16 @@ class KinodynamicAstar
   /* search */
   double max_tau_, init_max_tau_;
   double max_vel_, max_acc_;
-  double w_time_, horizon_, lambda_heu_;
+  double rho_, horizon_, lambda_heu_;
   int allocate_num_, check_num_;
+  double tolerance_;
+  double input_res_, time_res_;
   double tie_breaker_;
   bool optimistic_;
 
   /* map */
   double resolution_, inv_resolution_, time_resolution_, inv_time_resolution_;
-  Eigen::Vector3d origin_, map_size_3d_;
+  Eigen::Vector3d origin_, map_size_;
   double time_origin_;
 
   /* helper */
@@ -183,8 +185,8 @@ class KinodynamicAstar
 
   void setMap(const std::shared_ptr<MapUtil<3>>& map_util);
 
-  void getKinoTraj(double delta_t, vec_Vec3f& path);
-  void getKinoTraj(double delta_t, std::vector<Eigen::Vector3d>& path);
+  double getKinoTraj(double delta_t, vec_Vec3f& path);
+  double getKinoTraj(double delta_t, std::vector<Eigen::Vector3d>& path);
   bool hasMap();
   void getSamples(double& ts, std::vector<Eigen::Vector3d>& point_set,
                   std::vector<Eigen::Vector3d>& start_end_derivatives);

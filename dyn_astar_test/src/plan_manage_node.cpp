@@ -55,13 +55,15 @@ int main(int argc, char** argv)
     if (map_util->has_map_() && !plan_once)
     {
       success = kastar.search(start, start_vel, start_acc, goal, goal_vel);
-      ROS_INFO(success == 2 ? "\033[1;32mPATH FOUND!\033[0m"
-                            : "\033[1;31mPATH NOT FOUND\033[0m");
+      ROS_INFO(success == KinodynamicAstar::REACH_END
+                   ? "\033[1;32mPATH FOUND!\033[0m"
+                   : "\033[1;31mPATH NOT FOUND\033[0m");
       /* visual path */
-      if (success == 2)
+      if (success == KinodynamicAstar::REACH_END)
       {
         /* vec_Vec3f */
-        kastar.getKinoTraj(0.01, path);
+        double effort = kastar.getKinoTraj(0.01, path);
+        ROS_INFO("effort: %lf", effort);
 
         /* visualize */
         visualizer.visualizePath(path);
