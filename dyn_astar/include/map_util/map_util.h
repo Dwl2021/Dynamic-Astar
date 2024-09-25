@@ -56,7 +56,7 @@ class MapUtil
     nh.param("/map/resolution", res_, 0.2);
     nh.param("/map/x_size", map_size(0), 50.0);
     nh.param("/map/y_size", map_size(1), 50.0);
-    nh.param("/map/z_size", map_size(2), 2.0);
+    nh.param("/map/z_size", map_size(2), 4.0);
     nh.param("/map/origin_x", origin_d_(0), -25.0);
     nh.param("/map/origin_y", origin_d_(1), -25.0);
     nh.param("/map/origin_z", origin_d_(2), 0.0);
@@ -80,8 +80,7 @@ class MapUtil
     }
 
     ROS_INFO("buffer size: %d", buffer_size);
-    point_cloud_sub_ =
-        nh.subscribe("/global_map", 10, &MapUtil::GlobalMapBuild, this);
+    point_cloud_sub_ = nh.subscribe("/global_map", 10, &MapUtil::GlobalMapBuild, this);
   }
 
   void GlobalMapBuild(const sensor_msgs::PointCloud2 &pointcloud_map)
@@ -111,8 +110,7 @@ class MapUtil
   }
 
   template <typename F_get_val, typename F_set_val>
-  void fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int end,
-                int dim)
+  void fillESDF(F_get_val f_get_val, F_set_val f_set_val, int start, int end, int dim)
   {
     int v[dim_(dim)];  // voxel number
     double z[dim_(dim) + 1];
@@ -151,8 +149,7 @@ class MapUtil
   void updateESDF()
   {
     Eigen::Vector3i min_esdf = Eigen::Vector3i(0, 0, 0);
-    Eigen::Vector3i max_esdf =
-        Eigen::Vector3i(dim_(0) - 1, dim_(1) - 1, dim_(2) - 1);
+    Eigen::Vector3i max_esdf = Eigen::Vector3i(dim_(0) - 1, dim_(1) - 1, dim_(2) - 1);
 
     /* ========== compute positive DT ========== */
     for (int x = min_esdf[0]; x <= max_esdf[0]; x++)
@@ -176,9 +173,8 @@ class MapUtil
       for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
       {
         fillESDF([&](int y) { return tmp_buffer1_[toAddress(x, y, z)]; },
-                 [&](int y, double val)
-                 { tmp_buffer2_[toAddress(x, y, z)] = val; }, min_esdf[1],
-                 max_esdf[1], 1);
+                 [&](int y, double val) { tmp_buffer2_[toAddress(x, y, z)] = val; },
+                 min_esdf[1], max_esdf[1], 1);
       }
     }
 
@@ -187,9 +183,8 @@ class MapUtil
       for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
       {
         fillESDF([&](int x) { return tmp_buffer2_[toAddress(x, y, z)]; },
-                 [&](int x, double val) {
-                   distance_buffer_[toAddress(x, y, z)] = res_ * std::sqrt(val);
-                 },
+                 [&](int x, double val)
+                 { distance_buffer_[toAddress(x, y, z)] = res_ * std::sqrt(val); },
                  min_esdf[0], max_esdf[0], 0);
       }
     }
@@ -202,9 +197,7 @@ class MapUtil
       {
         fillESDF(
             [&](int z) {
-              return isFree(toAddress(x, y, z))
-                         ? 0
-                         : std::numeric_limits<double>::max();
+              return isFree(toAddress(x, y, z)) ? 0 : std::numeric_limits<double>::max();
             },
             [&](int z, double val) { tmp_buffer1_[toAddress(x, y, z)] = val; },
             min_esdf[2], max_esdf[2], 2);
@@ -216,9 +209,8 @@ class MapUtil
       for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
       {
         fillESDF([&](int y) { return tmp_buffer1_[toAddress(x, y, z)]; },
-                 [&](int y, double val)
-                 { tmp_buffer2_[toAddress(x, y, z)] = val; }, min_esdf[1],
-                 max_esdf[1], 1);
+                 [&](int y, double val) { tmp_buffer2_[toAddress(x, y, z)] = val; },
+                 min_esdf[1], max_esdf[1], 1);
       }
     }
 
@@ -227,10 +219,8 @@ class MapUtil
       for (int z = min_esdf[2]; z <= max_esdf[2]; z++)
       {
         fillESDF([&](int x) { return tmp_buffer2_[toAddress(x, y, z)]; },
-                 [&](int x, double val) {
-                   distance_buffer_neg_[toAddress(x, y, z)] =
-                       res_ * std::sqrt(val);
-                 },
+                 [&](int x, double val)
+                 { distance_buffer_neg_[toAddress(x, y, z)] = res_ * std::sqrt(val); },
                  min_esdf[0], max_esdf[0], 0);
       }
     }
@@ -266,10 +256,7 @@ class MapUtil
   }
 
   /// Check if the given cell is outside of the map in i-the dimension
-  bool isOutsideXYZ(const Veci<Dim> &n, int i)
-  {
-    return n(i) < 0 || n(i) >= dim_(i);
-  }
+  bool isOutsideXYZ(const Veci<Dim> &n, int i) { return n(i) < 0 || n(i) >= dim_(i); }
 
   /// free 0 occ 100 unknow -1
   bool isFree(int idx) { return map_[idx] == val_free; }        // 0
@@ -356,8 +343,7 @@ class MapUtil
    * @param map array of cell values
    * @param res map resolution
    */
-  void setMap(const Vecf<Dim> &ori, const Veci<Dim> &dim, const Tmap &map,
-              decimal_t res)
+  void setMap(const Vecf<Dim> &ori, const Veci<Dim> &dim, const Tmap &map, decimal_t res)
   {
     map_ = map;
     dim_ = dim;
@@ -380,16 +366,14 @@ class MapUtil
   Veci<Dim> floatToInt(const Vecf<Dim> &pt)
   {
     Veci<Dim> pn;
-    for (int i = 0; i < Dim; i++)
-      pn(i) = std::round((pt(i) - origin_d_(i)) / res_ - 0.5);
+    for (int i = 0; i < Dim; i++) pn(i) = std::round((pt(i) - origin_d_(i)) / res_ - 0.5);
     return pn;
   }
   /// Discrete cell coordinate to float position
   Vecf<Dim> intToFloat(const Veci<Dim> &pn)
   {
     // return pn.template cast<decimal_t>() * res_ + origin_d_;
-    return (pn.template cast<decimal_t>() + Vecf<Dim>::Constant(0.5)) * res_ +
-           origin_d_;
+    return (pn.template cast<decimal_t>() + Vecf<Dim>::Constant(0.5)) * res_ + origin_d_;
   }
 
   /// Raytrace from float point pt1 to pt2
@@ -605,7 +589,7 @@ class MapUtil
   std::string world_frame_id;
 
  protected:
-  bool use_esdf_ = true;
+  bool use_esdf_ = false;
   bool built_esdf_ = false;
   /// Resolution
   decimal_t res_;
